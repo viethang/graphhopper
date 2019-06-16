@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -86,7 +87,7 @@ public class GenericWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
         if (reverse) {
             if (!edgeState.getReverse(accessEnc))
@@ -100,7 +101,8 @@ public class GenericWeighting extends AbstractWeighting {
                 || maxWeightEnc != null && overLimit(weight, edgeState.get(maxWeightEnc)))
             return Double.POSITIVE_INFINITY;
 
-        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        // todonow: not sure here!!
+        long time = calcMillis(edgeState, reverse, EdgeIterator.NO_EDGE);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 

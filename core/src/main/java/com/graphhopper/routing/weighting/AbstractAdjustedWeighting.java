@@ -40,6 +40,27 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
         return superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
     }
 
+    @Override
+    public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
+        superWeighting.setTurnCostHandler(turnCostHandler);
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        // todo: should this be 'blocked' too ?
+        return superWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return superWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public boolean allowsUTurns() {
+        return superWeighting.allowsUTurns();
+    }
+
     /**
      * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
      */

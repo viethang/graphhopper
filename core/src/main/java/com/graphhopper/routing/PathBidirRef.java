@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -124,9 +123,7 @@ public class PathBidirRef extends Path {
         // todonow: consolidate this!
         if (edge.getBaseNode() == edge.getAdjNode()) {
             long millis = weighting.calcMillis(edge, false, NO_EDGE);
-            if (weighting instanceof TurnWeighting && EdgeIterator.Edge.isValid(nextEdgeId)) {
-                millis += 1000 * (long) ((TurnWeighting) weighting).calcTurnWeight(edge.getEdge(), edge.getBaseNode(), nextEdgeId);
-            }
+            millis += weighting.calcTurnMillis(edge.getEdge(), edge.getBaseNode(), nextEdgeId);
             time += millis;
         } else {
             time += weighting.calcMillis(edge, true, nextEdgeId);
@@ -135,16 +132,7 @@ public class PathBidirRef extends Path {
     }
 
     private void processTurn(int inEdge, int viaNode, int outEdge) {
-        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
-            return;
-        }
-        if (weighting instanceof TurnWeighting) {
-            time += ((TurnWeighting) weighting).calcTurnWeight(inEdge, viaNode, outEdge) * 1000;
-            // bugfix: should be cleaned up with u-turn refactoring #1520
-            if (inEdge == outEdge) {
-                time += ((TurnWeighting) weighting).getDefaultTurnCost() * 1000;
-            }
-        }
+        time += weighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     protected int getIncEdge(SPTEntry entry) {

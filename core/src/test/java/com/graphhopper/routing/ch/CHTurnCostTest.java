@@ -22,8 +22,8 @@ import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -59,7 +59,6 @@ public class CHTurnCostTest {
     private Weighting weighting;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
-    private TurnWeighting turnWeighting;
     private CHGraph chGraph;
     private boolean checkStrict;
 
@@ -75,7 +74,7 @@ public class CHTurnCostTest {
         weighting = new ShortestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
-        turnWeighting = new TurnWeighting(weighting, turnCostExtension);
+        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
         chGraph = graph.getGraph(CHGraph.class);
         checkStrict = true;
     }
@@ -1018,7 +1017,7 @@ public class CHTurnCostTest {
     }
 
     private Path findPathUsingDijkstra(int from, int to) {
-        Dijkstra dijkstra = new Dijkstra(graph, turnWeighting, TraversalMode.EDGE_BASED_2DIR);
+        Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
         return dijkstra.calcPath(from, to);
     }
 

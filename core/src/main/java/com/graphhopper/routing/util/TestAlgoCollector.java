@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -54,10 +55,11 @@ public class TestAlgoCollector {
         FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
         if (encoder.supports(TurnWeighting.class)) {
             if (!opts.getTraversalMode().isEdgeBased()) {
-                errors.add("Cannot use TurnWeighting with a node based traversal");
+                errors.add("Cannot include turn costs with node based traversal");
                 return this;
             }
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
+            opts.getWeighting().setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(opts.getWeighting()).build());
         }
 
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();

@@ -24,8 +24,9 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
@@ -36,7 +37,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -59,8 +59,8 @@ public class EdgeBasedNodeContractorTest {
     private CarFlagEncoder encoder;
     private GraphHopperStorage graph;
     private TurnCostExtension turnCostExtension;
-    private TurnWeighting turnWeighting;
-    private TurnWeighting chTurnWeighting;
+    private Weighting weighting;
+    private Weighting chWeighting;
 
     @Rule
     public RepeatRule repeatRule = new RepeatRule();
@@ -74,12 +74,13 @@ public class EdgeBasedNodeContractorTest {
     private void initialize() {
         encoder = new CarFlagEncoder(5, 5, maxCost);
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        Weighting weighting = new ShortestWeighting(encoder);
-        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
+        weighting = new ShortestWeighting(encoder);
+        chWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
-        turnWeighting = new TurnWeighting(weighting, turnCostExtension);
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        TurnCostHandler turnCostHandler = new DefaultTurnCostHandler((TurnCostExtension) graph.getExtension(), encoder);
+        weighting.setTurnCostHandler(turnCostHandler);
+        chWeighting.setTurnCostHandler(turnCostHandler);
         chGraph = graph.getGraph(CHGraph.class);
     }
 
@@ -1364,14 +1365,14 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, chTurnWeighting, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(chGraph, chWeighting, new PMap());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
 
     private double calcWeight(EdgeIteratorState edge1, EdgeIteratorState edge2) {
-        return turnWeighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                turnWeighting.calcWeight(edge2, false, edge1.getEdge());
+        return weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
+                weighting.calcWeight(edge2, false, edge1.getEdge());
     }
 
     private void addRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode) {

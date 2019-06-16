@@ -20,8 +20,8 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
@@ -39,17 +39,17 @@ public class WitnessPathSearcherTest {
 
     private GraphHopperStorage graph;
     private CHGraph chGraph;
-    private TurnWeighting chTurnWeighting;
+    private Weighting chWeighting;
 
     @Before
     public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 10);
         EncodingManager encodingManager = EncodingManager.create(encoder);
         Weighting weighting = new ShortestWeighting(encoder);
-        PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
+        chWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-        chTurnWeighting = new TurnWeighting(preparationWeighting, turnCostExtension);
+        chWeighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
         chGraph = graph.getGraph(CHGraph.class);
     }
 
@@ -128,7 +128,7 @@ public class WitnessPathSearcherTest {
     }
 
     private WitnessPathSearcher createFinder() {
-        return new WitnessPathSearcher(chGraph, chTurnWeighting, new PMap());
+        return new WitnessPathSearcher(chGraph, chWeighting, new PMap());
     }
 
     private void setMaxLevelOnAllNodes() {

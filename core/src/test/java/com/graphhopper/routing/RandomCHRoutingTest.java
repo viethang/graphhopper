@@ -6,8 +6,8 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -153,11 +153,11 @@ public class RandomCHRoutingTest {
                 assertEquals("queryGraph and chQueryGraph should have equal number of nodes", queryGraph.getNodes(), chQueryGraph.getNodes());
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
-                Weighting w = traversalMode.isEdgeBased()
-                        ? new TurnWeighting(weighting, (TurnCostExtension) queryGraph.getExtension())
-                        : weighting;
+                if (traversalMode.isEdgeBased()) {
+                    weighting.setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
+                }
                 // using plain dijkstra instead of bidirectional, because of #1592
-                RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, w, traversalMode);
+                RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, weighting, traversalMode);
                 Path refPath = refAlgo.calcPath(from, to);
                 double refWeight = refPath.getWeight();
                 if (!refPath.isFound()) {

@@ -15,6 +15,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TurnWeightingTest {
 
+    // todonow: rename this test now that TurnWeighting is gone
     private Graph graph;
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
@@ -36,18 +37,30 @@ public class TurnWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2, 100, true);
         // turn costs are given in seconds
         addTurnCost(0, 1, 2, 5);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExt);
-        assertEquals(6 + 5, turnWeighting.calcWeight(edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, turnWeighting.calcMillis(edge, false, 0), 1.e-6);
+        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExt, encoder));
+        assertEquals(6 + 5, weighting.calcWeight(edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, weighting.calcMillis(edge, false, 0), 1.e-6);
     }
 
     @Test
     public void calcWeightAndTime_defaultUTurn() {
-        // for u-turns default costs get applied
+        // u-turns are forbidden by default
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, turnCostExt);
-        assertEquals(6 + 40, turnWeighting.calcWeight(edge, false, 0), 1.e-6);
-        assertEquals((6 + 40) * 1000, turnWeighting.calcMillis(edge, false, 0), 1.e-6);
+        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExt, encoder);
+        weighting.setTurnCostHandler(turnCostHandler);
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcWeight(edge, false, 0), 1.e-6);
+        assertEquals(Long.MAX_VALUE, weighting.calcMillis(edge, false, 0), 1.e-6);
+    }
+
+    @Test
+    public void calcWeightAndTime_setDefaultUTurn() {
+        // if we set default costs for u-turns they get applied
+        EdgeIteratorState edge = graph.edge(0, 1, 100, true);
+        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExt, encoder);
+        turnCostHandler.setDefaultUTurnCost(40);
+        weighting.setTurnCostHandler(turnCostHandler);
+        assertEquals(6 + 40, weighting.calcWeight(edge, false, 0), 1.e-6);
+        assertEquals((6 + 40) * 1000, weighting.calcMillis(edge, false, 0), 1.e-6);
     }
 
     @Test
@@ -56,11 +69,12 @@ public class TurnWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2, 100, true);
         // turn costs are given in seconds
         addTurnCost(0, 1, 2, 5);
-        TurnWeighting turnWeighting = new TurnWeighting(new ShortestWeighting(encoder), turnCostExt);
+        Weighting weighting = new ShortestWeighting(encoder);
+        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExt, encoder));
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds ? at least when they are added
         // to the weight ? how much should they contribute ?
 //        assertEquals(105, turnWeighting.calcWeight(edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, turnWeighting.calcMillis(edge, false, 0), 1.e-6);
+        assertEquals(6000 + 5000, weighting.calcMillis(edge, false, 0), 1.e-6);
     }
 
     private void addTurnCost(int from, int via, int to, double turnCost) {

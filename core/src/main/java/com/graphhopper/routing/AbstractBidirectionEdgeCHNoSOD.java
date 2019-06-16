@@ -22,10 +22,9 @@ import com.graphhopper.routing.ch.EdgeBasedPathCH;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -37,21 +36,17 @@ import com.graphhopper.util.GHUtility;
 public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerInExplorer;
     private final EdgeExplorer innerOutExplorer;
-    private final TurnWeighting turnWeighting;
-    private final TurnCostExtension turnCostExtension;
 
-    public AbstractBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
+    public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
         super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
-        this.turnWeighting = weighting;
+        if (weighting.allowsUTurns()) {
+            throw new IllegalArgumentException("Edge-based CH does not support u-turns so far");
+        }
         // we need extra edge explorers, because they get called inside a loop that already iterates over edges
         // important: we have to use different filter ids, otherwise this will not work with QueryGraph's edge explorer
         // cache, see #1623.
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
-        if (!(graph.getExtension() instanceof TurnCostExtension)) {
-            throw new IllegalArgumentException("edge-based CH algorithms require a turn cost extension");
-        }
-        turnCostExtension = (TurnCostExtension) graph.getExtension();
     }
 
     @Override
@@ -111,18 +106,19 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);
-            if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(edgeId, prevOrNextOrigEdgeId)) {
+
+            double turnCostsAtBridgeNode = reverse ?
+                    weighting.calcTurnWeight(iter.getOrigEdgeLast(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
+                    weighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getOrigEdgeFirst());
+            if (turnCostsAtBridgeNode == Weighting.FORBIDDEN_TURN) {
                 continue;
             }
+
             int key = GHUtility.getEdgeKey(graph, edgeId, iter.getBaseNode(), !reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
             }
-
-            double turnCostsAtBridgeNode = reverse ?
-                    turnWeighting.calcTurnWeight(iter.getOrigEdgeLast(), iter.getBaseNode(), prevOrNextOrigEdgeId) :
-                    turnWeighting.calcTurnWeight(prevOrNextOrigEdgeId, iter.getBaseNode(), iter.getOrigEdgeFirst());
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
             if (newWeight < bestPath.getWeight()) {
@@ -159,12 +155,11 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     @Override
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         final int incEdge = getIncomingEdge(currEdge);
-        if (incEdge == EdgeIterator.NO_EDGE)
-            return true;
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        if (!traversalMode.hasUTurnSupport() && turnCostExtension.isUTurn(incEdge, prevOrNextEdgeId))
+        double turnWeight = weighting.calcTurnWeight(incEdge, currEdge.adjNode, prevOrNextEdgeId);
+        if (turnWeight == Weighting.FORBIDDEN_TURN) {
             return false;
-
+        }
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(edge);
     }
 

@@ -21,8 +21,8 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -508,13 +508,13 @@ public class QueryGraphTest {
 
         QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) qGraph.getExtension());
+        weighting.setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) qGraph.getExtension(), encoder));
 
-        assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         // now use turn costs and QueryGraph
         turnExt.addTurnInfo(edge0.getEdge(), 1, edge1.getEdge(), encoder.getTurnFlags(false, 10));
-        assertEquals(10, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
+        assertEquals(10, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 
         QueryResult res1 = createLocationResult(0.000, 0.005, edge0, 0, QueryResult.Position.EDGE);
         QueryResult res2 = createLocationResult(0.005, 0.010, edge1, 0, QueryResult.Position.EDGE);
@@ -524,7 +524,7 @@ public class QueryGraphTest {
         int fromQueryEdge = GHUtility.getEdge(qGraph, res1.getClosestNode(), 1).getEdge();
         int toQueryEdge = GHUtility.getEdge(qGraph, res2.getClosestNode(), 1).getEdge();
 
-        assertEquals(10, turnWeighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
+        assertEquals(10, weighting.calcTurnWeight(fromQueryEdge, 1, toQueryEdge), .1);
 
         graphWithTurnCosts.close();
     }

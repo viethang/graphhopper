@@ -22,10 +22,8 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +50,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
-    private final TurnWeighting turnWeighting;
+    private final Weighting weighting;
     private final FlagEncoder encoder;
     private final ShortcutHandler addingShortcutHandler = new AddingShortcutHandler();
     private final ShortcutHandler countingShortcutHandler = new CountingShortcutHandler();
@@ -82,11 +80,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // counters used for performance analysis
     private int numPolledEdges;
 
-    public EdgeBasedNodeContractor(CHGraph prepareGraph,
-                                   TurnWeighting turnWeighting, PMap pMap) {
-        super(prepareGraph, turnWeighting);
-        this.turnWeighting = turnWeighting;
-        this.encoder = turnWeighting.getFlagEncoder();
+    public EdgeBasedNodeContractor(CHGraph prepareGraph, Weighting weighting, PMap pMap) {
+        // todo: should we take any weighting and wrap in prepare weighting here as for node based ?
+        super(prepareGraph, weighting);
+        this.weighting = weighting;
+        this.encoder = weighting.getFlagEncoder();
         this.pMap = pMap;
         extractParams(pMap);
     }
@@ -100,7 +98,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public void initFromGraph() {
         super.initFromGraph();
-        witnessPathSearcher = new WitnessPathSearcher(prepareGraph, turnWeighting, pMap);
+        witnessPathSearcher = new WitnessPathSearcher(prepareGraph, weighting, pMap);
         DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(encoder);
         DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(encoder);
         DefaultEdgeFilter allEdgeFilter = DefaultEdgeFilter.allEdges(encoder);
@@ -239,7 +237,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     /**
      * A given potential loop shortcut is only necessary if there is at least one pair of original in- & out-edges for
      * which taking the loop is cheaper than doing the direct turn. However this is almost always the case, because
-     * doing a u-turn at any of the incoming edges is forbidden, i.e. he costs of the direct turn will be infinite.
+     * doing a u-turn at any of the incoming edges is forbidden, i.e. the costs of the direct turn will be infinite.
      */
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
@@ -247,8 +245,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
             EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
             double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
-                double totalLoopCost = inTurnCost + loopWeight +
-                        getTurnCost(lastOrigEdge, node, outIter.getEdge());
+                double totalLoopCost = inTurnCost + loopWeight + getTurnCost(lastOrigEdge, node, outIter.getEdge());
                 double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
                 if (totalLoopCost < directTurnCost) {
                     return true;
@@ -278,7 +275,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // this is some other (shortcut) edge, we do not care
                 continue;
             }
-            final double existingWeight = turnWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
+            final double existingWeight = weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing
                 CHEntry entry = new CHEntry(iter.getEdge(), iter.getOrigEdgeLast(), adjNode, existingWeight);
@@ -319,10 +316,12 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     }
 
     private double getTurnCost(int inEdge, int node, int outEdge) {
-        if (illegalUTurn(outEdge, inEdge)) {
+        double turnWeight = weighting.calcTurnWeight(inEdge, node, outEdge);
+        // todo: get rid of this 'conversion'
+        if (turnWeight == Weighting.FORBIDDEN_TURN) {
             return Double.POSITIVE_INFINITY;
         }
-        return turnWeighting.calcTurnWeight(inEdge, node, outEdge);
+        return turnWeight;
     }
 
     private void resetEdgeCounters() {
@@ -330,10 +329,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         numPrevEdges = 0;
         numOrigEdges = 0;
         numPrevOrigEdges = 0;
-    }
-
-    private boolean illegalUTurn(int inEdge, int outEdge) {
-        return outEdge == inEdge;
     }
 
     private Stats stats() {

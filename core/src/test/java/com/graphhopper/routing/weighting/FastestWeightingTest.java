@@ -99,4 +99,6 @@ public class FastestWeightingTest {
 
         g.close();
     }
+
+    // todonow: update tests
 }

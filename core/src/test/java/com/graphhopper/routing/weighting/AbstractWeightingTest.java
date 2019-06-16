@@ -34,4 +34,6 @@ public class AbstractWeightingTest {
         assertFalse(AbstractWeighting.isValidName("Blup"));
         assertFalse(AbstractWeighting.isValidName("Blup!"));
     }
+
+    // todonow: add tests for turn costs/calc weight/calcmillis
 }

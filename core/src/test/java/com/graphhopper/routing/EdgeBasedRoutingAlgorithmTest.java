@@ -23,8 +23,9 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -147,7 +148,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), tcs).setDefaultUTurnCost(uTurnCosts);
+        Weighting weighting = new FastestWeighting(encoder);
+        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(tcs, encoder);
+        turnCostHandler.setDefaultUTurnCost(uTurnCosts);
+        weighting.setTurnCostHandler(turnCostHandler);
+        return weighting;
     }
 
     @Test
@@ -398,7 +403,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         addTurnCost(g, 2, 5, 6, 3);
         addTurnCost(g, 1, 6, 7, 4);
 
-        TurnWeighting weighting = new TurnWeighting(new FastestWeighting(carEncoder), tcs) {
+        Weighting weighting = new FastestWeighting(carEncoder);
+        TurnCostHandler turnCostHandler = new DefaultTurnCostHandler(tcs, carEncoder) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
@@ -407,7 +413,9 @@ public class EdgeBasedRoutingAlgorithmTest {
                     assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
-        }.setDefaultUTurnCost(40);
+        };
+        turnCostHandler.setDefaultUTurnCost(40);
+        weighting.setTurnCostHandler(turnCostHandler);
         Path p = createAlgo(g, weighting, EDGE_BASED_2DIR).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);

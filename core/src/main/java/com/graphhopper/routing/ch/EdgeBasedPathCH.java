@@ -1,6 +1,5 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -14,14 +13,8 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 
 public class EdgeBasedPathCH extends Path4CH {
 
-    private final TurnWeighting turnWeighting;
-
     public EdgeBasedPathCH(Graph routingGraph, Graph baseGraph, final Weighting weighting) {
         super(routingGraph, baseGraph, weighting);
-        if (!(weighting instanceof TurnWeighting)) {
-            throw new IllegalArgumentException("Need a TurnWeighting for edge-based CH");
-        }
-        turnWeighting = (TurnWeighting) weighting;
     }
 
     @Override
@@ -37,7 +30,7 @@ public class EdgeBasedPathCH extends Path4CH {
                 if (reverse && edge.getBaseNode() == edge.getAdjNode() && !((CHEdgeIteratorState) edge).isShortcut()) {
                     long millis = weighting.calcMillis(edge, false, NO_EDGE);
                     if (EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
-                        millis += 1000 * (long) turnWeighting.calcTurnWeight(edge.getEdge(), edge.getBaseNode(), prevOrNextEdgeId);
+                        millis += weighting.calcTurnMillis(edge.getEdge(), edge.getBaseNode(), prevOrNextEdgeId);
                     }
                     time += millis;
                 } else {

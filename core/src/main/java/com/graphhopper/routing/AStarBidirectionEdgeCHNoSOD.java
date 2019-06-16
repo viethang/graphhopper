@@ -31,7 +31,7 @@ public class AStarBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD 
     private final boolean useHeuristicForNodeOrder = false;
     private ConsistentWeightApproximator weightApprox;
 
-    public AStarBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
+    public AStarBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
         super(graph, weighting);
         setApproximation(new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(Helper.DIST_PLANE));
     }

@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
@@ -44,17 +45,50 @@ public class PreparationWeighting implements Weighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        double turnWeight = reverse
+                ? calcTurnWeight(edgeState.getOrigEdgeLast(), edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getOrigEdgeFirst());
+        if (turnWeight == Double.MAX_VALUE) {
+            return Long.MAX_VALUE;
+        }
+        return turnWeight + calcEdgeWeight(edgeState, reverse);
+    }
+
+    @Override
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         CHEdgeIteratorState tmp = (CHEdgeIteratorState) edgeState;
         if (tmp.isShortcut())
             // if a shortcut is in both directions the weight is identical => no need for 'reverse'
             return tmp.getWeight();
-
-        return userWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
+        return userWeighting.calcEdgeWeight(edgeState, reverse);
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        if (edgeState instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edgeState).isShortcut()) {
+            throw new IllegalStateException("calcMillis should only be called on original edges");
+        }
         return userWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
+    public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
+        userWeighting.setTurnCostHandler(turnCostHandler);
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return userWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return userWeighting.calcTurnMillis(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public boolean allowsUTurns() {
+        return false;
     }
 
     @Override

@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.util.*;
 
@@ -67,7 +67,7 @@ public class WitnessPathSearcher {
 
     // graph variables
     private final CHGraph chGraph;
-    private final TurnWeighting turnWeighting;
+    private final Weighting weighting;
     private final EdgeExplorer outEdgeExplorer;
     private final EdgeExplorer origInEdgeExplorer;
     private final int maxLevel;
@@ -107,13 +107,13 @@ public class WitnessPathSearcher {
     private final Stats currentBatchStats = new Stats();
     private final Stats totalStats = new Stats();
 
-    public WitnessPathSearcher(CHGraph chGraph, TurnWeighting turnWeighting, PMap pMap) {
+    public WitnessPathSearcher(CHGraph chGraph, Weighting weighting, PMap pMap) {
         this.chGraph = chGraph;
-        this.turnWeighting = turnWeighting;
+        this.weighting = weighting;
         extractParams(pMap);
 
-        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(turnWeighting.getFlagEncoder());
-        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(turnWeighting.getFlagEncoder());
+        DefaultEdgeFilter inEdgeFilter = DefaultEdgeFilter.inEdges(weighting.getFlagEncoder());
+        DefaultEdgeFilter outEdgeFilter = DefaultEdgeFilter.outEdges(weighting.getFlagEncoder());
         outEdgeExplorer = chGraph.createEdgeExplorer(outEdgeFilter);
         origInEdgeExplorer = chGraph.createOriginalEdgeExplorer(inEdgeFilter);
         maxLevel = chGraph.getNodes();
@@ -229,11 +229,14 @@ public class WitnessPathSearcher {
                 if (isContracted(iter.getAdjNode())) {
                     continue;
                 }
-                // do not allow u-turns
-                if (iter.getOrigEdgeFirst() == incEdges[currKey]) {
+                // todo: strictly we do not need to calculate turn weight separately here because it will
+                // be included in calcWeight already, but we need a reliable way to check if what is returned
+                // from calcWeight is 'infinite/max'. adding two infinite or max values is undefined ?
+                double turnWeight = weighting.calcTurnWeight(iter.getOrigEdgeFirst(), fromNode, incEdges[currKey]);
+                if (turnWeight == Weighting.FORBIDDEN_TURN) {
                     continue;
                 }
-                double edgeWeight = turnWeighting.calcWeight(iter, false, incEdges[currKey]);
+                double edgeWeight = weighting.calcWeight(iter, false, incEdges[currKey]);
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
                     continue;
@@ -339,7 +342,7 @@ public class WitnessPathSearcher {
             if (isInfinite(turnWeight)) {
                 continue;
             }
-            double edgeWeight = turnWeighting.calcWeight(outIter, false, NO_EDGE);
+            double edgeWeight = weighting.calcWeight(outIter, false, NO_EDGE);
             double weight = turnWeight + edgeWeight;
             boolean isPathToCenter = outIter.getAdjNode() == centerNode;
             int incEdge = outIter.getOrigEdgeLast();
@@ -482,7 +485,7 @@ public class WitnessPathSearcher {
         if (inEdge == outEdge) {
             return Double.POSITIVE_INFINITY;
         }
-        return turnWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
     private boolean isContracted(int node) {

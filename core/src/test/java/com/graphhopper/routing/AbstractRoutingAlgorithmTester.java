@@ -24,6 +24,7 @@ import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -828,6 +829,11 @@ public abstract class AbstractRoutingAlgorithmTester {
 
             @Override
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                return calcEdgeWeight(edgeState, reverse);
+            }
+
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {
@@ -852,6 +858,26 @@ public abstract class AbstractRoutingAlgorithmTester {
             @Override
             public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 return tmpW.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
+                tmpW.setTurnCostHandler(turnCostHandler);
+            }
+
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                return tmpW.calcTurnWeight(inEdge, viaNode, outEdge);
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return tmpW.calcTurnMillis(inEdge, viaNode, outEdge);
+            }
+
+            @Override
+            public boolean allowsUTurns() {
+                return tmpW.allowsUTurns();
             }
 
             @Override

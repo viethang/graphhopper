@@ -32,6 +32,7 @@ public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
     protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
+    protected TurnCostHandler turnCostHandler;
 
     protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
@@ -42,7 +43,30 @@ public abstract class AbstractWeighting implements Weighting {
 
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
+        turnCostHandler = new NoTurnCostHandler();
     }
+
+    @Override
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+        // todonow: was there any reason this check was introduced in calcMillis but not calcWeight ?
+        // todonow: enable this check ?!
+//        if (reverse && !edge.getReverse(accessEnc) || !reverse && !edge.get(accessEnc))
+//            throw new IllegalStateException("Calculating weight should not require to read speed from edge in wrong direction. " +
+//                    "(" + edge.getBaseNode() + " - " + edge.getAdjNode() + ") "
+//                    + edge.fetchWayGeometry(3) + ", dist: " + edge.getDistance() + " "
+//                    + "Reverse:" + reverse + ", fwd:" + edge.get(accessEnc) + ", bwd:" + edge.getReverse(accessEnc) + ", fwd-speed: " + edge.get(avSpeedEnc) + ", bwd-speed: " + edge.getReverse(avSpeedEnc));
+
+        double turnWeight = reverse
+                ? calcTurnWeight(edge.getOrigEdgeLast(), edge.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), edge.getOrigEdgeFirst());
+        if (turnWeight == Double.MAX_VALUE) {
+            return Long.MAX_VALUE;
+        }
+
+        return turnWeight + calcEdgeWeight(edge, reverse);
+    }
+
+    public abstract double calcEdgeWeight(EdgeIteratorState edge, boolean reverse);
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
@@ -52,13 +76,40 @@ public abstract class AbstractWeighting implements Weighting {
                     + edgeState.fetchWayGeometry(3) + ", dist: " + edgeState.getDistance() + " "
                     + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
 
+        long turnMillis = reverse
+                ? calcTurnMillis(edgeState.getOrigEdgeLast(), edgeState.getBaseNode(), prevOrNextEdgeId)
+                : calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getOrigEdgeFirst());
+        if (turnMillis == Long.MAX_VALUE) {
+            return Long.MAX_VALUE;
+        }
         double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
             throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
 
-        return (long) (edgeState.getDistance() * 3600 / speed);
+        long millis = (long) (edgeState.getDistance() * 3600 / speed);
+        return millis + turnMillis;
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return turnCostHandler.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return turnCostHandler.calcTurnMillis(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
+        this.turnCostHandler = turnCostHandler;
+    }
+
+    @Override
+    public boolean allowsUTurns() {
+        return false;
     }
 
     @Override

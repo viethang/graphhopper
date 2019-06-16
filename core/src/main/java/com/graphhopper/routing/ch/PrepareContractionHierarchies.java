@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -159,10 +159,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AbstractBidirAlgo createAlgoEdgeBased(Graph graph, AlgorithmOptions opts) {
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            return new AStarBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph))
+            return new AStarBidirectionEdgeCHNoSOD(graph, createCHWeightingForTurnCosts(graph))
                     .setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            return new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph));
+            return new DijkstraBidirectionEdgeCHNoSOD(graph, createCHWeightingForTurnCosts(graph));
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge-based Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -454,14 +454,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
-            TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            return new EdgeBasedNodeContractor(prepareGraph, chTurnWeighting, pMap);
+            Weighting turnCostWeighting = createCHWeightingForTurnCosts(graph);
+            return new EdgeBasedNodeContractor(prepareGraph, turnCostWeighting, pMap);
         } else {
             return new NodeBasedNodeContractor(prepareGraph, weighting, pMap);
         }
     }
 
-    private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
+    private Weighting createCHWeightingForTurnCosts(Graph graph) {
         // important: do not simply take the extension from ghStorage, because we need the wrapped extension from
         // query graph!
         GraphExtension extension = graph.getExtension();
@@ -469,7 +469,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
-        return new TurnWeighting(prepareWeighting, turnCostExtension);
+        prepareWeighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, prepareWeighting.getFlagEncoder()));
+        return prepareWeighting;
     }
 
     private static class Params {
