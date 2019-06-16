@@ -171,6 +171,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             if (fromNode == sch.getNode() || isContracted(fromNode))
                 continue;
 
+            // todonow: can probably be replaced with calcEdgeWeight now
             final double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             // this check is important to prevent calling calcMillis on inaccessible edges and also allows early exit
             if (Double.isInfinite(incomingEdgeWeight)) {
@@ -193,6 +194,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
+                // todonow: can probably be replacd with calcEdgeWeight now
                 double existingDirectWeight = incomingEdgeWeight + prepareWeighting.calcWeight(outgoingEdges, false, incomingEdges.getEdge());
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
@@ -244,6 +246,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                     if (status == 0)
                         continue;
 
+                    // todonow: can probably be replacd with calcEdgeWeight now
                     if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE)) {
                         // special case if a bidirectional shortcut has worse weight and still has to be added as otherwise the opposite direction would be missing
                         // see testShortcutMergeBug

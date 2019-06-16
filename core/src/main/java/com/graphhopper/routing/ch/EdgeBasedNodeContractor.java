@@ -275,6 +275,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // this is some other (shortcut) edge, we do not care
                 continue;
             }
+            // todonow: this can be replaced with calcTurnWeight now
             final double existingWeight = weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing

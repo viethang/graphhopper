@@ -578,6 +578,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     int calcWeight(EdgeIteratorState edge, boolean reverse) {
+        // todonow: can probably be replaced with calcEdgeWeight now.
         return (int) (weighting.calcWeight(edge, reverse, EdgeIterator.NO_EDGE) / factor);
     }
 

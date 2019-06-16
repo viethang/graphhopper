@@ -342,6 +342,7 @@ public class WitnessPathSearcher {
             if (isInfinite(turnWeight)) {
                 continue;
             }
+            // todonow: replace with calcEdgeWeight
             double edgeWeight = weighting.calcWeight(outIter, false, NO_EDGE);
             double weight = turnWeight + edgeWeight;
             boolean isPathToCenter = outIter.getAdjNode() == centerNode;
