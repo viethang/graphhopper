@@ -712,8 +712,6 @@ public class CHQueryWithTurnCostsTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         TurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExtension, encoder);
-        // todonow: why was this set to 0 ?
-//        turnCostHandler.setDefaultUTurnCost(0);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         preparationWeighting.setTurnCostHandler(turnCostHandler);
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?
