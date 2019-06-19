@@ -32,7 +32,8 @@ public class TurnWeighting {
 
     @Override
     public String toString() {
-        // todonow: where was this needed and how to do this now ?
+        // todonow: where was this needed and how to do this now ? maybe add this in AbstractWeighting in case there
+        // is a non-no-op turn cost extension ?
         return "turn|" + superWeighting.toString();
     }
 

@@ -12,7 +12,7 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
     public DefaultTurnCostHandler(TurnCostExtension turnCostExtension, TurnCostEncoder turnCostEncoder) {
         this.turnCostExtension = turnCostExtension;
         // todonow: I wonder do we even need a flexible/configurable turn cost encoder or can this be done entirely inside
-        // turn cost extension, turn cost behavior
+        // turn cost extension ?
         this.turnCostEncoder = turnCostEncoder;
     }
 

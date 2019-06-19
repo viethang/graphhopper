@@ -81,7 +81,6 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private int numPolledEdges;
 
     public EdgeBasedNodeContractor(CHGraph prepareGraph, Weighting weighting, PMap pMap) {
-        // todo: should we take any weighting and wrap in prepare weighting here as for node based ?
         super(prepareGraph, weighting);
         this.weighting = weighting;
         this.encoder = weighting.getFlagEncoder();
@@ -275,8 +274,7 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // this is some other (shortcut) edge, we do not care
                 continue;
             }
-            // todonow: this can be replaced with calcTurnWeight now
-            final double existingWeight = weighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
+            final double existingWeight = weighting.calcEdgeWeight(iter, false);
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing
                 CHEntry entry = new CHEntry(iter.getEdge(), iter.getOrigEdgeLast(), adjNode, existingWeight);
