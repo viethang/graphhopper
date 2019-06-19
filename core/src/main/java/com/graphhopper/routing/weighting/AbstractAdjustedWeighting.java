@@ -47,7 +47,7 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        // todo: should this be 'blocked' too ?
+        // todonow: should this be 'blocked' too ?
         return superWeighting.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
