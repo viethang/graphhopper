@@ -70,12 +70,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         return this;
     }
 
-    protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
-        // todonow: remove this explicit u-turn check and how does this even work ? can there not be cases where
-        // a u-turn on virtual edges is missed here (same reason why there is TurnCostExtension#isUTurn) ?
-        if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
-            return false;
-
+    protected boolean accept(EdgeIteratorState iter) {
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 

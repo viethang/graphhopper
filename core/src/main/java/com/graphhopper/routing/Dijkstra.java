@@ -77,13 +77,14 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
             int startNode = currEdge.adjNode;
             EdgeIterator iter = explorer.setBaseNode(startNode);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge))
+                if (!accept(iter))
                     continue;
 
-                int traversalId = traversalMode.createTraversalId(iter, false);
                 double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
-                if (Double.isInfinite(tmpWeight))
+                if (Double.isInfinite(tmpWeight)) {
                     continue;
+                }
+                int traversalId = traversalMode.createTraversalId(iter, false);
 
                 SPTEntry nEdge = fromMap.get(traversalId);
                 if (nEdge == null) {
