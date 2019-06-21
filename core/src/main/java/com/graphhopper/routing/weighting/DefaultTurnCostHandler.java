@@ -4,7 +4,17 @@ import com.graphhopper.util.EdgeIterator;
 
 public class DefaultTurnCostHandler implements TurnCostHandler {
 
-    private double defaultUTurnCost = Double.POSITIVE_INFINITY;
+    public static double DEFAULT_FINITE_UTURN_COSTS = 40;
+
+    private double defaultUTurnCost;
+
+    public DefaultTurnCostHandler() {
+        this(Double.POSITIVE_INFINITY);
+    }
+
+    public DefaultTurnCostHandler(double defaultUTurnCost) {
+        this.defaultUTurnCost = defaultUTurnCost;
+    }
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {

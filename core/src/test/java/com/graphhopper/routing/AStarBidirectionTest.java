@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.graphhopper.routing.weighting.DefaultTurnCostHandler.DEFAULT_FINITE_UTURN_COSTS;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -39,9 +41,11 @@ import static org.junit.Assert.assertEquals;
 @RunWith(Parameterized.class)
 public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     private final TraversalMode traversalMode;
+    private final boolean allowUTurns;
 
-    public AStarBidirectionTest(TraversalMode tMode) {
+    public AStarBidirectionTest(TraversalMode tMode, boolean allowUTurns) {
         this.traversalMode = tMode;
+        this.allowUTurns = allowUTurns;
     }
 
     /**
@@ -50,9 +54,9 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-                {TraversalMode.NODE_BASED},
-                {TraversalMode.EDGE_BASED_2DIR},
-                {TraversalMode.EDGE_BASED_2DIR_UTURN}
+                {TraversalMode.NODE_BASED, false},
+                {TraversalMode.EDGE_BASED_2DIR, false},
+                {TraversalMode.EDGE_BASED_2DIR, true}
         });
     }
 
@@ -61,6 +65,9 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+                if (allowUTurns) {
+                    opts.getWeighting().setTurnCostHandler(new DefaultTurnCostHandler(DEFAULT_FINITE_UTURN_COSTS));
+                }
                 return new AStarBidirection(g, opts.getWeighting(), traversalMode);
             }
         };
