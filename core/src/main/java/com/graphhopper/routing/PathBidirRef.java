@@ -117,17 +117,7 @@ public class PathBidirRef extends Path {
     protected void processEdgeBwd(int edgeId, int adjNode, int nextEdgeId) {
         EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, adjNode);
         distance += edge.getDistance();
-        // special case for loop edges: since they do not have a meaningful direction we always need to read them
-        // in the 'fwd' direction, but be careful the turn costs have to be applied with reverse = true, see also
-        // same comment in EdgeBasedPath4CH
-        // todonow: consolidate this!
-        if (edge.getBaseNode() == edge.getAdjNode()) {
-            long millis = weighting.calcMillis(edge, false, NO_EDGE);
-            millis += weighting.calcTurnMillis(edge.getEdge(), edge.getBaseNode(), nextEdgeId);
-            time += millis;
-        } else {
-            time += weighting.calcMillis(edge, true, nextEdgeId);
-        }
+        time += weighting.calcMillis(edge, true, nextEdgeId);
         addEdge(edgeId);
     }
 
