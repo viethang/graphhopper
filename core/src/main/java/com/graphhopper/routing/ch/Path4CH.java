@@ -50,7 +50,7 @@ public class Path4CH extends PathBidirRef {
             @Override
             public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 distance += edge.getDistance();
-                time += weighting.calcMillis(edge, reverse, NO_EDGE);
+                time += weighting.calcEdgeMillis(edge, reverse);
                 addEdge(edge.getEdge());
             }
         }, false);

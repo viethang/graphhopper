@@ -71,17 +71,17 @@ public class GenericWeightingTest {
     public void testCalcTime() {
         GenericWeighting weighting = new GenericWeighting(encoder, new HintsMap());
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
+        assertEquals(edgeWeight, weighting.calcEdgeMillis(edge, false), .1);
     }
 
     @Test
     public void testRoadAttributeRestriction() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         Weighting instance = new GenericWeighting(encoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 4.0));
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(edgeWeight, instance.calcEdgeWeight(edge, false), 1e-8);
 
         instance = new GenericWeighting(encoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
-        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(Double.POSITIVE_INFINITY, instance.calcEdgeWeight(edge, false), 1e-8);
     }
 
     @Test
@@ -104,6 +104,6 @@ public class GenericWeightingTest {
 
         Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(edgeWeight, instance.calcEdgeWeight(edge, false), 1e-8);
     }
 }

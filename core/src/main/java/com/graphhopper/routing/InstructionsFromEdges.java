@@ -428,8 +428,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
         double newDist = edge.getDistance();
         prevInstruction.setDistance(newDist + prevInstruction.getDistance());
-        prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
-                + prevInstruction.getTime());
+        prevInstruction.setTime(weighting.calcEdgeMillis(edge, false) + prevInstruction.getTime());
     }
 
 }

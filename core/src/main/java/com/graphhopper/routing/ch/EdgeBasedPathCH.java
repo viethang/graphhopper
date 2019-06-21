@@ -26,7 +26,7 @@ public class EdgeBasedPathCH extends Path4CH {
                 // a one-way loop that is not a shortcut cannot possibly be read in the 'right' direction, because
                 // there is no way to distinguish the two directions. therefore we always read it in fwd direction.
                 // reverse still has to be considered to decide how to calculate the turn weight
-                // todo: turn cost clean-up, should we move this inside calcMillis ?
+                // todonow: turn cost clean-up, should we move this inside calcMillis ?
                 if (reverse && edge.getBaseNode() == edge.getAdjNode() && !((CHEdgeIteratorState) edge).isShortcut()) {
                     long millis = weighting.calcMillis(edge, false, NO_EDGE);
                     if (EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {

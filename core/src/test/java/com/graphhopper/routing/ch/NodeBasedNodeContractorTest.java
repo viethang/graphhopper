@@ -458,8 +458,7 @@ public class NodeBasedNodeContractorTest {
     private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,
                                       boolean fwd, boolean bwd) {
         //todo: weight calculation might have to be adjusted for different encoders/weightings/reverse speed
-        double weight = weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
-                weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE);
+        double weight = weighting.calcEdgeWeight(edge1, false) + weighting.calcEdgeWeight(edge2, false);
         double distance = edge1.getDistance() + edge2.getDistance();
         return new Shortcut(baseNode, adjNode, weight, distance, fwd, bwd, edge1.getEdge(), edge2.getEdge());
     }

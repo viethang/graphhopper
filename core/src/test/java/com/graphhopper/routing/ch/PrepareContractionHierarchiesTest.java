@@ -313,29 +313,28 @@ public class PrepareContractionHierarchiesTest {
         int tmpEdgeId = edgeState01.getEdge();
         ghStorage.freeze();
         CHEdgeIteratorState sc0_2 = g.shortcut(0, 2);
-        int x = EdgeIterator.NO_EDGE;
-        sc0_2.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), w.calcWeight(edgeState01, false, x) + w.calcWeight(edgeState12, false, x));
+        sc0_2.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), w.calcEdgeWeight(edgeState01, false) + w.calcEdgeWeight(edgeState12, false));
         sc0_2.setDistance(2 * dist);
         sc0_2.setSkippedEdges(tmpEdgeId, edgeState12.getEdge());
         tmpEdgeId = sc0_2.getEdge();
         CHEdgeIteratorState sc0_3 = g.shortcut(0, 3);
-        sc0_3.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_2.getWeight() + w.calcWeight(edgeState23, false, x));
+        sc0_3.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_2.getWeight() + w.calcEdgeWeight(edgeState23, false));
         sc0_3.setDistance(3 * dist);
         sc0_3.setSkippedEdges(tmpEdgeId, edgeState23.getEdge());
         tmpEdgeId = sc0_3.getEdge();
         CHEdgeIteratorState sc0_4 = g.shortcut(0, 4);
         sc0_4.setDistance(4);
-        sc0_4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_3.getWeight() + w.calcWeight(edgeState34, false, x));
+        sc0_4.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_3.getWeight() + w.calcEdgeWeight(edgeState34, false));
         sc0_4.setSkippedEdges(tmpEdgeId, edgeState34.getEdge());
         tmpEdgeId = sc0_4.getEdge();
         CHEdgeIteratorState sc0_5 = g.shortcut(0, 5);
         sc0_5.setDistance(5);
-        sc0_5.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_4.getWeight() + w.calcWeight(edgeState45, false, x));
+        sc0_5.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_4.getWeight() + w.calcEdgeWeight(edgeState45, false));
         sc0_5.setSkippedEdges(tmpEdgeId, edgeState45.getEdge());
         tmpEdgeId = sc0_5.getEdge();
         CHEdgeIteratorState sc0_6 = g.shortcut(0, 6);
         sc0_6.setDistance(6);
-        sc0_6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_5.getWeight() + w.calcWeight(edgeState56, false, x));
+        sc0_6.setFlagsAndWeight(PrepareEncoder.getScFwdDir(), sc0_5.getWeight() + w.calcEdgeWeight(edgeState56, false));
         sc0_6.setSkippedEdges(tmpEdgeId, edgeState56.getEdge());
         g.setLevel(0, 10);
         g.setLevel(6, 9);
@@ -522,7 +521,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
-        return w.calcWeight(getEdge(graph, from, to, false), incoming, -1);
+        return w.calcEdgeWeight(getEdge(graph, from, to, false), incoming);
     }
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {
