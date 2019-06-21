@@ -229,13 +229,6 @@ public class WitnessPathSearcher {
                 if (isContracted(iter.getAdjNode())) {
                     continue;
                 }
-                // todonow: strictly we do not need to calculate turn weight separately here because it will
-                // be included in calcWeight already, but we need a reliable way to check if what is returned
-                // from calcWeight is 'infinite/max'. adding two infinite or max values is undefined ?
-                double turnWeight = weighting.calcTurnWeight(iter.getOrigEdgeFirst(), fromNode, incEdges[currKey]);
-                if (turnWeight == Weighting.FORBIDDEN_TURN) {
-                    continue;
-                }
                 double edgeWeight = weighting.calcWeight(iter, false, incEdges[currKey]);
                 double weight = edgeWeight + weights[currKey];
                 if (isInfinite(weight)) {
