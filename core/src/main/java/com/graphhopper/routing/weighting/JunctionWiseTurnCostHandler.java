@@ -22,6 +22,11 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
             return 0;
         }
         if (turnCostExtension.isUTurn(inEdge, outEdge)) {
+            // todonow: right now we do not allow setting/changing the u-turn costs for a specific junction!
+            // instead we should only apply the default u-turn costs in case no turn costs have been set
+            // explicitly, but this might have performance implications, because we would *always* have to check
+            // for manually set u-turn costs!!
+            // the same problem will apply for default left-turn costs etc.
             return defaultUTurnCost;
         }
         long turnFlags = turnCostExtension.getTurnCostFlags(inEdge, viaNode, outEdge);
