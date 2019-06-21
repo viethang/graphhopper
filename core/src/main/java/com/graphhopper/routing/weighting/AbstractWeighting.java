@@ -63,6 +63,7 @@ public abstract class AbstractWeighting implements Weighting {
             return turnWeight;
         }
 
+        // todonow: is this safe ? what if edge weight is infinite ? see also #991
         return turnWeight + calcEdgeWeight(edge, reverse);
     }
 
