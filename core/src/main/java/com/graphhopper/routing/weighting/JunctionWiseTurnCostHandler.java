@@ -39,8 +39,10 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
         return 1000 * (long) turnWeight;
     }
 
-    @Override
+    /**
+     * Set the default cost for a u-turn in seconds.
+     */
     public void setDefaultUTurnCost(double uTurnCosts) {
-        this.defaultUTurnCost = uTurnCosts;
+        defaultUTurnCost = uTurnCosts;
     }
 }

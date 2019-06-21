@@ -413,7 +413,6 @@ public class EdgeBasedRoutingAlgorithmTest {
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
         };
-        turnCostHandler.setDefaultUTurnCost(40);
         weighting.setTurnCostHandler(turnCostHandler);
         Path p = createAlgo(g, weighting, EDGE_BASED_2DIR).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());

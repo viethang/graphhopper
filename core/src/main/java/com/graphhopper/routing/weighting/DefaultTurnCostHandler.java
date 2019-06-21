@@ -12,6 +12,9 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
         this(Double.POSITIVE_INFINITY);
     }
 
+    /**
+     * @param defaultUTurnCost default u-turn cost in seconds
+     */
     public DefaultTurnCostHandler(double defaultUTurnCost) {
         this.defaultUTurnCost = defaultUTurnCost;
     }
@@ -33,8 +36,4 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
         return 1000 * (long) turnWeight;
     }
 
-    @Override
-    public void setDefaultUTurnCost(double uTurnCosts) {
-        defaultUTurnCost = uTurnCosts;
-    }
 }

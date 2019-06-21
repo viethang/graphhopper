@@ -6,8 +6,4 @@ public interface TurnCostHandler {
 
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
-    /**
-     * Set the default cost for a u-turn in seconds.
-     */
-    void setDefaultUTurnCost(double uTurnCosts);
 }
