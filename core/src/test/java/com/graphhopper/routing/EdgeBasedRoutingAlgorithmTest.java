@@ -23,7 +23,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
@@ -149,7 +149,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
         Weighting weighting = new FastestWeighting(encoder);
-        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(tcs, encoder);
+        JunctionWiseTurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(tcs, encoder);
         turnCostHandler.setDefaultUTurnCost(uTurnCosts);
         weighting.setTurnCostHandler(turnCostHandler);
         return weighting;
@@ -404,7 +404,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         addTurnCost(g, 1, 6, 7, 4);
 
         Weighting weighting = new FastestWeighting(carEncoder);
-        TurnCostHandler turnCostHandler = new DefaultTurnCostHandler(tcs, carEncoder) {
+        TurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(tcs, carEncoder) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)

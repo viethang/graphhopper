@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -49,7 +49,7 @@ public class WitnessPathSearcherTest {
         chWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         TurnCostExtension turnCostExtension = (TurnCostExtension) graph.getExtension();
-        chWeighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
+        chWeighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, encoder));
         chGraph = graph.getGraph(CHGraph.class);
     }
 

@@ -6,7 +6,7 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -154,7 +154,7 @@ public class RandomCHRoutingTest {
                 int from = rnd.nextInt(queryGraph.getNodes());
                 int to = rnd.nextInt(queryGraph.getNodes());
                 if (traversalMode.isEdgeBased()) {
-                    weighting.setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
+                    weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
                 }
                 // using plain dijkstra instead of bidirectional, because of #1592
                 RoutingAlgorithm refAlgo = new Dijkstra(queryGraph, weighting, traversalMode);

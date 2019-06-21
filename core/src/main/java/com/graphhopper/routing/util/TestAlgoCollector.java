@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -58,7 +58,7 @@ public class TestAlgoCollector {
                 errors.add("Cannot include turn costs with node based traversal");
                 return this;
             }
-            opts.getWeighting().setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
+            opts.getWeighting().setTurnCostHandler(new JunctionWiseTurnCostHandler((TurnCostExtension) queryGraph.getExtension(), encoder));
             algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(opts.getWeighting()).build());
         }
 

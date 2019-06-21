@@ -8,7 +8,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -157,7 +157,7 @@ public class Path4CHTest {
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
         PreparationWeighting chWeighting = new PreparationWeighting(weighting);
-        chWeighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
+        chWeighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, encoder));
         CHGraph lg = graph.getGraph(CHGraph.class, weighting);
         AbstractBidirectionEdgeCHNoSOD algo = new DijkstraBidirectionEdgeCHNoSOD(lg, chWeighting);
         algo.setEdgeFilter(new LevelEdgeFilter(lg));

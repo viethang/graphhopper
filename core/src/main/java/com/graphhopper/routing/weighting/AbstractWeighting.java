@@ -43,7 +43,7 @@ public abstract class AbstractWeighting implements Weighting {
 
         avSpeedEnc = encoder.getAverageSpeedEnc();
         accessEnc = encoder.getAccessEnc();
-        turnCostHandler = new NoTurnCostHandler();
+        turnCostHandler = new DefaultTurnCostHandler();
     }
 
     @Override

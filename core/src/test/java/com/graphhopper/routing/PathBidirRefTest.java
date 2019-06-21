@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -69,7 +69,7 @@ public class PathBidirRefTest {
         turnCostExtension.addTurnInfo(0, 2, 1, carEncoder.getTurnFlags(false, 5));
 
         Weighting weighting = new FastestWeighting(carEncoder);
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, carEncoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, carEncoder));
         PathBidirRef p = new PathBidirRef(g, weighting);
         p.sptEntry = new SPTEntry(0, 2, 0.6);
         p.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);

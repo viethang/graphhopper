@@ -21,7 +21,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -508,7 +508,7 @@ public class QueryGraphTest {
 
         QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) qGraph.getExtension(), encoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler((TurnCostExtension) qGraph.getExtension(), encoder));
 
         assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 

@@ -22,7 +22,7 @@ import com.graphhopper.Repeat;
 import com.graphhopper.RepeatRule;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -74,7 +74,7 @@ public class CHTurnCostTest {
         weighting = new ShortestWeighting(encoder);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, encoder));
         chGraph = graph.getGraph(CHGraph.class);
         checkStrict = true;
     }

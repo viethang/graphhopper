@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -469,7 +469,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
-        prepareWeighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, prepareWeighting.getFlagEncoder()));
+        prepareWeighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, prepareWeighting.getFlagEncoder()));
         return prepareWeighting;
     }
 

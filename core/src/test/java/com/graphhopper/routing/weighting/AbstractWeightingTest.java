@@ -55,7 +55,7 @@ public class AbstractWeightingTest {
         EdgeIteratorState edge = graph.edge(1, 2, 100, true);
         // turn costs are given in seconds
         addTurnCost(0, 1, 2, 5);
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExt, encoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExt, encoder));
         assertEquals(6 + 5, weighting.calcWeight(edge, false, 0), 1.e-6);
         assertEquals(6000 + 5000, weighting.calcMillis(edge, false, 0), 1.e-6);
     }
@@ -64,7 +64,7 @@ public class AbstractWeightingTest {
     public void calcWeightAndTime_defaultUTurn() {
         // u-turns are forbidden by default
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExt, encoder);
+        JunctionWiseTurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(turnCostExt, encoder);
         weighting.setTurnCostHandler(turnCostHandler);
         assertEquals(Double.POSITIVE_INFINITY, weighting.calcWeight(edge, false, 0), 1.e-6);
         assertEquals(Long.MAX_VALUE, weighting.calcMillis(edge, false, 0), 1.e-6);
@@ -74,7 +74,7 @@ public class AbstractWeightingTest {
     public void calcWeightAndTime_setDefaultUTurn() {
         // if we set default costs for u-turns they get applied
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        DefaultTurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExt, encoder);
+        JunctionWiseTurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(turnCostExt, encoder);
         turnCostHandler.setDefaultUTurnCost(40);
         weighting.setTurnCostHandler(turnCostHandler);
         assertEquals(6 + 40, weighting.calcWeight(edge, false, 0), 1.e-6);
@@ -88,7 +88,7 @@ public class AbstractWeightingTest {
         // turn costs are given in seconds
         addTurnCost(0, 1, 2, 5);
         Weighting weighting = new ShortestWeighting(encoder);
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExt, encoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExt, encoder));
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds ? at least when they are added
         // to the weight ? how much should they contribute ?
 //        assertEquals(105, turnWeighting.calcWeight(edge, false, 0), 1.e-6);

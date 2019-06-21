@@ -8,7 +8,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
@@ -53,7 +53,7 @@ public class ShortcutUnpackerTest {
         chGraph = graph.getGraph(CHGraph.class, weighting);
         if (edgeBased) {
             turnCostExtension = (TurnCostExtension) graph.getExtension();
-            weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
+            weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, encoder));
         }
     }
 

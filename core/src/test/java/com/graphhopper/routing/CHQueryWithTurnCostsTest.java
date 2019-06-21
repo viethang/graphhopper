@@ -67,7 +67,7 @@ public class CHQueryWithTurnCostsTest {
 
     public CHQueryWithTurnCostsTest(String algoString) {
         this.algoString = algoString;
-        weighting.setTurnCostHandler(new DefaultTurnCostHandler(turnCostExtension, encoder));
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExtension, encoder));
     }
 
     @Test
@@ -711,7 +711,7 @@ public class CHQueryWithTurnCostsTest {
     }
 
     private AbstractBidirectionEdgeCHNoSOD createAlgo() {
-        TurnCostHandler turnCostHandler = new DefaultTurnCostHandler(turnCostExtension, encoder);
+        TurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(turnCostExtension, encoder);
         PreparationWeighting preparationWeighting = new PreparationWeighting(weighting);
         preparationWeighting.setTurnCostHandler(turnCostHandler);
         AbstractBidirectionEdgeCHNoSOD algo = "astar".equals(algoString) ?

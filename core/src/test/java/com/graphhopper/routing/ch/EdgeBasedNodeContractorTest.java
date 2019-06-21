@@ -24,7 +24,7 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.JunctionWiseTurnCostHandler;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnCostHandler;
 import com.graphhopper.routing.weighting.Weighting;
@@ -78,7 +78,7 @@ public class EdgeBasedNodeContractorTest {
         chWeighting = new PreparationWeighting(weighting);
         graph = new GraphBuilder(encodingManager).setCHGraph(weighting).setEdgeBasedCH(true).create();
         turnCostExtension = (TurnCostExtension) graph.getExtension();
-        TurnCostHandler turnCostHandler = new DefaultTurnCostHandler((TurnCostExtension) graph.getExtension(), encoder);
+        TurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler((TurnCostExtension) graph.getExtension(), encoder);
         weighting.setTurnCostHandler(turnCostHandler);
         chWeighting.setTurnCostHandler(turnCostHandler);
         chGraph = graph.getGraph(CHGraph.class);

@@ -932,7 +932,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting setTurnCostHandler(Graph graph, Weighting weighting, TraversalMode tMode) {
         FlagEncoder encoder = weighting.getFlagEncoder();
         if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
-            weighting.setTurnCostHandler(new DefaultTurnCostHandler((TurnCostExtension) graph.getExtension(), encoder));
+            weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler((TurnCostExtension) graph.getExtension(), encoder));
         return weighting;
     }
 
