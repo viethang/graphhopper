@@ -861,6 +861,11 @@ public abstract class AbstractRoutingAlgorithmTester {
             }
 
             @Override
+            public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+                return tmpW.calcEdgeMillis(edgeState, reverse);
+            }
+
+            @Override
             public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
                 tmpW.setTurnCostHandler(turnCostHandler);
             }

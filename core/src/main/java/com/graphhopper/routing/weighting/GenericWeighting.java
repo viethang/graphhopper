@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -101,8 +100,7 @@ public class GenericWeighting extends AbstractWeighting {
                 || maxWeightEnc != null && overLimit(weight, edgeState.get(maxWeightEnc)))
             return Double.POSITIVE_INFINITY;
 
-        // todonow: not sure here!!
-        long time = calcMillis(edgeState, reverse, EdgeIterator.NO_EDGE);
+        long time = calcEdgeMillis(edgeState, reverse);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
@@ -119,7 +117,7 @@ public class GenericWeighting extends AbstractWeighting {
     }
 
     @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         // TODO to avoid expensive reverse flags include oneway accessibility
         // but how to include e.g. maxspeed as it depends on direction? Does highway depend on direction?
         // reverse = edge.isReverse()? !reverse : reverse;

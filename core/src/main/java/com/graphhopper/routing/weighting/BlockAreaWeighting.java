@@ -16,11 +16,6 @@ public class BlockAreaWeighting extends AbstractAdjustedWeighting {
     }
 
     @Override
-    public double getMinWeight(double distance) {
-        return superWeighting.getMinWeight(distance);
-    }
-
-    @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         if (blockArea.contains(edgeState))
             return Double.POSITIVE_INFINITY;
@@ -34,6 +29,22 @@ public class BlockAreaWeighting extends AbstractAdjustedWeighting {
             return Double.POSITIVE_INFINITY;
 
         return superWeighting.calcEdgeWeight(edgeState, reverse);
+    }
+
+    @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        if (blockArea.contains(edgeState))
+            return Long.MAX_VALUE;
+
+        return superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        if (blockArea.contains(edgeState))
+            return Long.MAX_VALUE;
+
+        return superWeighting.calcEdgeMillis(edgeState, reverse);
     }
 
     @Override

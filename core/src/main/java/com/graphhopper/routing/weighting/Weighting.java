@@ -46,6 +46,7 @@ public interface Weighting {
      * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
      *                         has to be the next edgeId in the direction from start to end.
      */
+    // todonow: I wonder if we should replace usages of this method with a static Helper function ?
     double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
     /**
@@ -62,18 +63,22 @@ public interface Weighting {
      */
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
+    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+
     /**
      * This method calculates the time taken (in milli seconds) for the specified edgeState and
      * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
      * prevOrNextEdgeId. Typically used for post-processing and on only a few thousand edges.
      */
+    // todonow: I wonder if we should replace usages of this method with a static Helper function ?
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
-    void setTurnCostHandler(TurnCostHandler turnCostHandler);
-
-    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+    // todonow: javadocs
+    long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
+
+    void setTurnCostHandler(TurnCostHandler turnCostHandler);
 
     boolean allowsUTurns();
 

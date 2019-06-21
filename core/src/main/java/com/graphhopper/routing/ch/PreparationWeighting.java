@@ -72,6 +72,14 @@ public class PreparationWeighting implements Weighting {
     }
 
     @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        if (edgeState instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edgeState).isShortcut()) {
+            throw new IllegalStateException("calcMillis should only be called on original edges");
+        }
+        return userWeighting.calcEdgeMillis(edgeState, reverse);
+    }
+
+    @Override
     public void setTurnCostHandler(TurnCostHandler turnCostHandler) {
         userWeighting.setTurnCostHandler(turnCostHandler);
     }

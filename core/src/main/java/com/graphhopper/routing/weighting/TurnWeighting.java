@@ -17,27 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.HintsMap;
-
 /**
- * todo: Only used as marker interface, probably can be removed entirely
+ * todonow: Only used as marker interface, probably can be removed entirely
  */
 public class TurnWeighting {
-    private Weighting superWeighting;
-
-    public boolean matches(HintsMap weightingMap) {
-        // TODO without 'turn' in comparison
-        return superWeighting.matches(weightingMap);
-    }
-
-    @Override
-    public String toString() {
-        // todonow: where was this needed and how to do this now ? maybe add this in AbstractWeighting in case there
-        // is a non-no-op turn cost extension ?
-        return "turn|" + superWeighting.toString();
-    }
-
-    public String getName() {
-        return "turn|" + superWeighting.getName();
-    }
 }
