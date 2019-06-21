@@ -49,7 +49,7 @@ public abstract class AbstractWeighting implements Weighting {
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         // todonow: was there any reason this check was introduced in calcMillis but not calcWeight ?
-        // todonow: enable this check ?!
+        // todonow: enable this check ? (right now many tests fail!)
 //        if (reverse && !edge.getReverse(accessEnc) || !reverse && !edge.get(accessEnc))
 //            throw new IllegalStateException("Calculating weight should not require to read speed from edge in wrong direction. " +
 //                    "(" + edge.getBaseNode() + " - " + edge.getAdjNode() + ") "

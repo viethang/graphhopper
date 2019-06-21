@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 /**
- * todonow: Only used as marker interface, probably can be removed entirely
+ * todonow: Only used as marker interface for FlagEncoder#supports, probably can be removed entirely ?
  */
 public class TurnWeighting {
 }
