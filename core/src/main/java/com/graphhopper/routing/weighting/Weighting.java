@@ -63,19 +63,27 @@ public interface Weighting {
      */
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
+    /**
+     * Calculates the turn weight between the given edges at the given node
+     */
     double calcTurnWeight(int inEdge, int viaNode, int outEdge);
 
     /**
-     * This method calculates the time taken (in milli seconds) for the specified edgeState and
-     * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
-     * prevOrNextEdgeId. Typically used for post-processing and on only a few thousand edges.
+     * Like {@link #calcEdgeMillis(EdgeIteratorState, boolean)}, but also taking into account the turn cost time from
+     * the previous (if reverse=false) or to the next edge (if reverse=true).
      */
     // todonow: I wonder if we should replace usages of this method with a static Helper function ?
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
-    // todonow: javadocs
+    /**
+     * This method calculates the time taken (in milli seconds) for the specified edgeState.
+     * Typically used for post-processing and on only a few thousand edges.
+     */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
+    /**
+     * Calculates the turn time between the given edges at the given node
+     */
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
 
     void setTurnCostHandler(TurnCostHandler turnCostHandler);
