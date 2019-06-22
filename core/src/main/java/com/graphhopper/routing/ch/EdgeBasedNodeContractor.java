@@ -86,6 +86,9 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         this.encoder = weighting.getFlagEncoder();
         this.pMap = pMap;
         extractParams(pMap);
+        if (weighting.allowsUTurns()) {
+            throw new IllegalArgumentException("edge-based CH currently does not support u-turns");
+        }
     }
 
     private void extractParams(PMap pMap) {

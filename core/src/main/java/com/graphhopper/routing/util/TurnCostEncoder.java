@@ -42,4 +42,24 @@ public interface TurnCostEncoder {
      */
     long getTurnFlags(boolean restricted, double costs);
 
+    /**
+     * No turn costs will be enabled by this encoder, should be used for e.g. pedestrians
+     */
+    class NoTurnCostsEncoder implements TurnCostEncoder {
+
+        @Override
+        public boolean isTurnRestricted(long flags) {
+            return false;
+        }
+
+        @Override
+        public double getTurnCost(long flags) {
+            return 0;
+        }
+
+        @Override
+        public long getTurnFlags(boolean restriction, double costs) {
+            return 0;
+        }
+    }
 }

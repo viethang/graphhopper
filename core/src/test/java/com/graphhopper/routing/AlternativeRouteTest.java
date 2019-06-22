@@ -104,7 +104,7 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives() throws Exception {
+    public void testCalcAlternatives() {
         Weighting weighting = new FastestWeighting(carFE);
         GraphHopperStorage g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
@@ -133,7 +133,7 @@ public class AlternativeRouteTest {
     }
 
     @Test
-    public void testCalcAlternatives2() throws Exception {
+    public void testCalcAlternatives2() {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
@@ -155,17 +155,17 @@ public class AlternativeRouteTest {
         assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
-    void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
+    private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
         assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
         AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
         for (int i = 1; i < alternativeInfos.size(); i++) {
             AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
             if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
-                assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
+                fail("alternative is not longer -> " + a + " vs " + bestInfo);
 
             if (a.getShareWeight() > bestInfo.getPath().getWeight()
                     || a.getShareWeight() > a.getPath().getWeight())
-                assertTrue("share or sortby incorrect -> " + a + " vs " + bestInfo, false);
+                fail("share or sortby incorrect -> " + a + " vs " + bestInfo);
         }
     }
 
