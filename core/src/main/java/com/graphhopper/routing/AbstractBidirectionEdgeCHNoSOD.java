@@ -156,7 +156,9 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
         final int incEdge = getIncomingEdge(currEdge);
         final int prevOrNextEdgeId = getOrigEdgeId(edge, !reverse);
-        double turnWeight = weighting.calcTurnWeight(incEdge, currEdge.adjNode, prevOrNextEdgeId);
+        double turnWeight = reverse
+                ? weighting.calcTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), incEdge)
+                : weighting.calcTurnWeight(incEdge, edge.getBaseNode(), prevOrNextEdgeId);
         if (turnWeight == Weighting.FORBIDDEN_TURN) {
             return false;
         }

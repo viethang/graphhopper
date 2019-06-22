@@ -19,8 +19,11 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostHandler;
+import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.TurnCostExtension;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
