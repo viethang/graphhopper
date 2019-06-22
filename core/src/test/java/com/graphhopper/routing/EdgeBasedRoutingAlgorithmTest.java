@@ -149,7 +149,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     private Weighting createWeighting(FlagEncoder encoder, double uTurnCosts) {
         Weighting weighting = new FastestWeighting(encoder);
         JunctionWiseTurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(tcs, encoder);
-        turnCostHandler.setDefaultUTurnCost(uTurnCosts);
+        turnCostHandler.setUTurnCost(uTurnCosts);
         weighting.setTurnCostHandler(turnCostHandler);
         return weighting;
     }

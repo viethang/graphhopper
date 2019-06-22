@@ -7,7 +7,7 @@ import com.graphhopper.util.EdgeIterator;
 public class JunctionWiseTurnCostHandler implements TurnCostHandler {
     private final TurnCostExtension turnCostExtension;
     private final TurnCostEncoder turnCostEncoder;
-    private double defaultUTurnCost = Double.POSITIVE_INFINITY;
+    private double uTurnCost = Double.POSITIVE_INFINITY;
 
     public JunctionWiseTurnCostHandler(TurnCostExtension turnCostExtension, TurnCostEncoder turnCostEncoder) {
         this.turnCostExtension = turnCostExtension;
@@ -27,7 +27,7 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
             // explicitly, but this might have performance implications, because we would *always* have to check
             // for manually set u-turn costs!!
             // the same problem will apply for default left-turn costs etc.
-            return defaultUTurnCost;
+            return uTurnCost;
         }
         long turnFlags = turnCostExtension.getTurnCostFlags(inEdge, viaNode, outEdge);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
@@ -45,9 +45,9 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
     }
 
     /**
-     * Set the default cost for a u-turn in seconds.
+     * Sets the cost for a u-turn in seconds.
      */
-    public void setDefaultUTurnCost(double uTurnCosts) {
-        defaultUTurnCost = uTurnCosts;
+    public void setUTurnCost(double uTurnCosts) {
+        uTurnCost = uTurnCosts;
     }
 }

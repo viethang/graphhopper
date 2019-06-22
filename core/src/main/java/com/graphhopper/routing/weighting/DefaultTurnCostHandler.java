@@ -6,17 +6,17 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
 
     public static double DEFAULT_FINITE_UTURN_COSTS = 40;
 
-    private double defaultUTurnCost;
+    private double uTurnCost;
 
     public DefaultTurnCostHandler() {
         this(Double.POSITIVE_INFINITY);
     }
 
     /**
-     * @param defaultUTurnCost default u-turn cost in seconds
+     * @param uTurnCost default u-turn cost in seconds
      */
-    public DefaultTurnCostHandler(double defaultUTurnCost) {
-        this.defaultUTurnCost = defaultUTurnCost;
+    public DefaultTurnCostHandler(double uTurnCost) {
+        this.uTurnCost = uTurnCost;
     }
 
     @Override
@@ -24,7 +24,7 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
         if (inEdge == EdgeIterator.NO_EDGE || outEdge == EdgeIterator.NO_EDGE) {
             return 0;
         }
-        return inEdge == outEdge ? defaultUTurnCost : 0;
+        return inEdge == outEdge ? uTurnCost : 0;
     }
 
     @Override
