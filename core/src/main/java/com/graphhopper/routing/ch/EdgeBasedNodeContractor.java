@@ -242,10 +242,11 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
         EdgeIterator inIter = loopAvoidanceInEdgeExplorer.setBaseNode(node);
         while (inIter.next()) {
             EdgeIterator outIter = loopAvoidanceOutEdgeExplorer.setBaseNode(node);
-            double inTurnCost = weighting.calcTurnWeight(inIter.getEdge(), node, firstOrigEdge);
+            double inTurnCost = getTurnCost(inIter.getEdge(), node, firstOrigEdge);
             while (outIter.next()) {
-                double totalLoopCost = inTurnCost + loopWeight + weighting.calcTurnWeight(lastOrigEdge, node, outIter.getEdge());
-                double directTurnCost = weighting.calcTurnWeight(inIter.getEdge(), node, outIter.getEdge());
+                double totalLoopCost = inTurnCost + loopWeight +
+                        getTurnCost(lastOrigEdge, node, outIter.getEdge());
+                double directTurnCost = getTurnCost(inIter.getEdge(), node, outIter.getEdge());
                 if (totalLoopCost < directTurnCost) {
                     return true;
                 }
@@ -312,6 +313,10 @@ class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 && (iter.getAdjNode() == adjNode)
                 && (iter.getOrigEdgeFirst() == firstOrigEdge)
                 && (iter.getOrigEdgeLast() == lastOrigEdge);
+    }
+
+    private double getTurnCost(int inEdge, int node, int outEdge) {
+        return weighting.calcTurnWeight(inEdge, node, outEdge);
     }
 
     private void resetEdgeCounters() {

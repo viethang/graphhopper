@@ -56,7 +56,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
                 {
                         TraversalMode.NODE_BASED
                 }, //            TODO { TraversalMode.EDGE_BASED_1DIR },
-                //            TODO { TraversalMode.EDGE_BASED_2DIR },
+                //            TODO { TraversalMode.EDGE_BASED },
                 //            TODO { TraversalMode.EDGE_BASED_2DIR_UTURN }
         });
     }

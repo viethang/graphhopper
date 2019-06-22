@@ -38,7 +38,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
     private final EdgeExplorer innerOutExplorer;
 
     public AbstractBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting) {
-        super(graph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        super(graph, weighting, TraversalMode.EDGE_BASED);
         if (weighting.allowsUTurns()) {
             throw new IllegalArgumentException("Edge-based CH does not support u-turns so far");
         }

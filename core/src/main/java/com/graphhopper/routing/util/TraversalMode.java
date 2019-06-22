@@ -42,7 +42,7 @@ public enum TraversalMode {
      * The bidirectional edged-based traversal mode with turn restriction and cost support. Without
      * u-turn support. 2 times slower than node based.
      */
-    EDGE_BASED_2DIR(true);
+    EDGE_BASED(true);
 
     private final boolean edgeBased;
 
