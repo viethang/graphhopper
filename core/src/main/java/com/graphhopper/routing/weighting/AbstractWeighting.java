@@ -59,8 +59,7 @@ public abstract class AbstractWeighting implements Weighting {
         double turnWeight = reverse
                 ? calcTurnWeight(edge.getOrigEdgeLast(), edge.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edge.getBaseNode(), edge.getOrigEdgeFirst());
-        // todonow: MAX_VALUE or POSITIVE_INFINITY ?
-        if (turnWeight == Double.MAX_VALUE) {
+        if (turnWeight == Weighting.FORBIDDEN_TURN) {
             return turnWeight;
         }
 

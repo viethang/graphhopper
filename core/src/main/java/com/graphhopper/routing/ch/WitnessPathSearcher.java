@@ -332,7 +332,7 @@ public class WitnessPathSearcher {
                 continue;
             }
             double turnWeight = calcTurnWeight(sourceEdge, sourceNode, outIter.getOrigEdgeFirst());
-            if (isInfinite(turnWeight)) {
+            if (turnWeight == Weighting.FORBIDDEN_TURN) {
                 continue;
             }
             double edgeWeight = weighting.calcEdgeWeight(outIter, false);

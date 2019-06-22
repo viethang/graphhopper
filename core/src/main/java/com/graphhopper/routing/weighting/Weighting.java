@@ -29,7 +29,7 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public interface Weighting {
 
-    double FORBIDDEN_TURN = Double.MAX_VALUE;
+    double FORBIDDEN_TURN = Double.POSITIVE_INFINITY;
 
     /**
      * Used only for the heuristic estimation in A*

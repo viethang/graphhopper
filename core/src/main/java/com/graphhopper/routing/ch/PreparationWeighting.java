@@ -48,9 +48,8 @@ public class PreparationWeighting implements Weighting {
         double turnWeight = reverse
                 ? calcTurnWeight(edgeState.getOrigEdgeLast(), edgeState.getBaseNode(), prevOrNextEdgeId)
                 : calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getOrigEdgeFirst());
-        // todonow: max or infinity ?
-        if (turnWeight == Double.MAX_VALUE) {
-            return Double.MAX_VALUE;
+        if (turnWeight == Weighting.FORBIDDEN_TURN) {
+            return turnWeight;
         }
         return turnWeight + calcEdgeWeight(edgeState, reverse);
     }

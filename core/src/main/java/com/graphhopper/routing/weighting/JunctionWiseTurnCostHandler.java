@@ -7,7 +7,7 @@ import com.graphhopper.util.EdgeIterator;
 public class JunctionWiseTurnCostHandler implements TurnCostHandler {
     private final TurnCostExtension turnCostExtension;
     private final TurnCostEncoder turnCostEncoder;
-    private double uTurnCost = Double.POSITIVE_INFINITY;
+    private double uTurnCost = Weighting.FORBIDDEN_TURN;
 
     public JunctionWiseTurnCostHandler(TurnCostExtension turnCostExtension, TurnCostEncoder turnCostEncoder) {
         this.turnCostExtension = turnCostExtension;
@@ -31,7 +31,7 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
         }
         long turnFlags = turnCostExtension.getTurnCostFlags(inEdge, viaNode, outEdge);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
-            return Double.POSITIVE_INFINITY;
+            return Weighting.FORBIDDEN_TURN;
         return turnCostEncoder.getTurnCost(turnFlags);
     }
 
