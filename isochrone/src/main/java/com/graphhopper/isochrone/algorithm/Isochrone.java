@@ -190,11 +190,6 @@ public class Isochrone extends AbstractRoutingAlgorithm {
                 if (!accept(iter)) {
                     continue;
                 }
-                // minor speed up
-                // todonow: really ?
-                if (currEdge.edge == iter.getEdge()) {
-                    continue;
-                }
 
                 double tmpWeight = weighting.calcWeight(iter, reverseFlow, currEdge.edge) + currEdge.weight;
                 if (Double.isInfinite(tmpWeight))

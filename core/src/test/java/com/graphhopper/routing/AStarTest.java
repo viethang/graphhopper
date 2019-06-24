@@ -59,7 +59,7 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory(GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts) {
+    public RoutingAlgorithmFactory createFactory(final GraphHopperStorage prepareGraph, final AlgorithmOptions prepareOpts) {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {

@@ -24,11 +24,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,6 +42,7 @@ import static org.junit.Assert.*;
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = EncodingManager.create(carFE);
+    private final Weighting weighting = new FastestWeighting(carFE);
     private final TraversalMode traversalMode;
 
     public AlternativeRouteTest(TraversalMode tMode) {
