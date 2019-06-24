@@ -187,7 +187,7 @@ public class Isochrone extends AbstractRoutingAlgorithm {
             int neighborNode = currEdge.adjNode;
             EdgeIterator iter = explorer.setBaseNode(neighborNode);
             while (iter.next()) {
-                if (!accept(iter)) {
+                if (!accept(iter, currEdge.edge)) {
                     continue;
                 }
 

@@ -47,7 +47,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirAlgo {
         // cache, see #1623.
         innerInExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.inEdges(flagEncoder).setFilterId(1));
         innerOutExplorer = graph.createEdgeExplorer(DefaultEdgeFilter.outEdges(flagEncoder).setFilterId(1));
-        if (!Double.isInfinite(weighting.getUTurnCost())) {
+        if (weighting.allowsUTurns()) {
             throw new IllegalArgumentException("edge-based CH does not support finite u-turn costs at the moment");
         }
     }
