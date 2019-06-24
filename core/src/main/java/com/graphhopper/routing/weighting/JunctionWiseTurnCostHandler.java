@@ -7,13 +7,22 @@ import com.graphhopper.util.EdgeIterator;
 public class JunctionWiseTurnCostHandler implements TurnCostHandler {
     private final TurnCostExtension turnCostExtension;
     private final TurnCostEncoder turnCostEncoder;
-    private double uTurnCost = Weighting.FORBIDDEN_TURN;
+    private final double uTurnCost;
 
     public JunctionWiseTurnCostHandler(TurnCostExtension turnCostExtension, TurnCostEncoder turnCostEncoder) {
+        this(turnCostExtension, turnCostEncoder, Weighting.FORBIDDEN_TURN);
+    }
+
+    /**
+     * @param uTurnCost the cost of a u-turn in seconds, this value will be applied to all u-turn costs no matter
+     *                  whether or not turnCostExtension contains explicit values for these turns.
+     */
+    public JunctionWiseTurnCostHandler(TurnCostExtension turnCostExtension, TurnCostEncoder turnCostEncoder, double uTurnCost) {
         this.turnCostExtension = turnCostExtension;
         // todonow: I wonder do we even need a flexible/configurable turn cost encoder or can this be done entirely inside
         // turn cost extension ?
         this.turnCostEncoder = turnCostEncoder;
+        this.uTurnCost = uTurnCost;
     }
 
     @Override
@@ -42,12 +51,5 @@ public class JunctionWiseTurnCostHandler implements TurnCostHandler {
             return Long.MAX_VALUE;
         }
         return 1000 * (long) turnWeight;
-    }
-
-    /**
-     * Sets the cost for a u-turn in seconds.
-     */
-    public void setUTurnCost(double uTurnCosts) {
-        uTurnCost = uTurnCosts;
     }
 }

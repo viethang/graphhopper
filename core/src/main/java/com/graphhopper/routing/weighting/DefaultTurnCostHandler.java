@@ -13,7 +13,7 @@ public class DefaultTurnCostHandler implements TurnCostHandler {
     }
 
     /**
-     * @param uTurnCost default u-turn cost in seconds
+     * @param uTurnCost the cost of a u-turn in seconds
      */
     public DefaultTurnCostHandler(double uTurnCost) {
         this.uTurnCost = uTurnCost;

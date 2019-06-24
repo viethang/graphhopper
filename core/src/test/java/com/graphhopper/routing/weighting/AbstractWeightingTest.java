@@ -74,9 +74,7 @@ public class AbstractWeightingTest {
     public void calcWeightAndTime_setDefaultUTurn() {
         // if we set default costs for u-turns they get applied
         EdgeIteratorState edge = graph.edge(0, 1, 100, true);
-        JunctionWiseTurnCostHandler turnCostHandler = new JunctionWiseTurnCostHandler(turnCostExt, encoder);
-        turnCostHandler.setUTurnCost(40);
-        weighting.setTurnCostHandler(turnCostHandler);
+        weighting.setTurnCostHandler(new JunctionWiseTurnCostHandler(turnCostExt, encoder, 40));
         assertEquals(6 + 40, weighting.calcWeight(edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, weighting.calcMillis(edge, false, 0), 1.e-6);
     }
