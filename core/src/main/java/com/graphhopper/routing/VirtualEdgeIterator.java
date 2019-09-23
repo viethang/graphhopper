@@ -68,7 +68,17 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
         return edges.get(current);
     }
 
-    @Override
+	@Override
+	public EdgeIterator setRouteDesc(String desc) {
+		return this;
+	}
+
+	@Override
+	public String getRouteDesc() {
+		return null;
+	}
+
+	@Override
     public int getEdge() {
         return edges.get(current).getEdge();
     }

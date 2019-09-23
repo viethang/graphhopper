@@ -177,7 +177,11 @@ public interface EdgeIteratorState {
 
     String getName();
 
-    EdgeIteratorState setName(String name);
+	String getRouteDesc();
+
+	EdgeIteratorState setName(String name);
+
+	EdgeIteratorState setRouteDesc(String desc);
 
     /**
      * Clones this EdgeIteratorState.

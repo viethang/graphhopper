@@ -318,6 +318,7 @@ class GtfsReader {
 
             EdgeIteratorState boardEdge = graph.edge(departureTimelineNode, departureNode);
             boardEdge.setName(getRouteName(feed, trip.trip));
+            boardEdge.setRouteDesc(getRouteDesc(feed, trip.trip));
             setEdgeTypeAndClearDistance(boardEdge, GtfsStorage.EdgeType.BOARD);
             boardEdge.set(accessEnc, true).setReverse(accessEnc, false);
             while (boardEdges.size() < stopTime.stop_sequence) {
@@ -664,6 +665,15 @@ class GtfsReader {
         String routePart = route != null ? (route.route_long_name != null ? route.route_long_name : route.route_short_name) : "extra";
         return routePart + " " + trip.trip_headsign;
     }
+
+	private String getRouteDesc(GTFSFeed feed, Trip trip) {
+		Route route = feed.routes.get(trip.route_id);
+		String routePart = route != null
+				? (route.route_long_name + ":::" + route.route_short_name + ":::" + route.route_desc + ":::"
+						+ route.route_type)
+				: "extra";
+		return routePart + ":::" + trip.trip_headsign;
+	}
 
     private void setEdgeTypeAndClearDistance(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
         edge.setDistance(0.0);

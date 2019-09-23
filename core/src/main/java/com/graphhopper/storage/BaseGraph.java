@@ -92,6 +92,7 @@ class BaseGraph implements Graph {
     private int edgeEntryIndex, nodeEntryIndex;
     private long maxGeoRef;
     private boolean frozen = false;
+    private static String routeDesc;
 
     public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, GraphExtension extendedStorage) {
@@ -1351,6 +1352,17 @@ class BaseGraph implements Graph {
             baseGraph.setName(edgePointer, name);
             return this;
         }
+
+		@Override
+		public String getRouteDesc() {
+			return routeDesc;
+		}
+
+		@Override
+		public EdgeIteratorState setRouteDesc(String desc) {
+			routeDesc = desc;
+			return this;
+		}
 
         @Override
         public final String toString() {

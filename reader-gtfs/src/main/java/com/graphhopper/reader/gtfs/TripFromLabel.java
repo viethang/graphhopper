@@ -355,15 +355,19 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
 
-                    result.add(new Trip.PtLeg(
+                    List<EdgeIteratorState> l = edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList());
+                    Trip.PtLeg leg = new Trip.PtLeg(
                             feedIdWithTimezone.feedId, partition.get(0).edge.nTransfers == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()).get(0).getName(),
+                            l.get(0).getName(),
+                            l.get(0).getRouteDesc(),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
-                            lineString));
+                            lineString
+                            );
+                    result.add(leg);
                     partition = null;
                 }
             }
