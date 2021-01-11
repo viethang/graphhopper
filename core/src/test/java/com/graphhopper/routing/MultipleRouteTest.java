@@ -14,12 +14,12 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class RoundTripSearcherTest {
+public class MultipleRouteTest {
     private final EncodingManager encodingManager;
     private final FlagEncoder encoder;
     private Weighting defaultWeighting;
 
-    public RoundTripSearcherTest() {
+    public MultipleRouteTest() {
         encodingManager = EncodingManager.create("car");
         encoder = encodingManager.getEncoder("car");
         defaultWeighting = new ShortestWeighting(encoder);
@@ -31,8 +31,8 @@ public class RoundTripSearcherTest {
         GHUtility.setSpeed(60, 60, encoder,
                 graph.edge(0, 1).setDistance(1)
         );
-        RoundTripSearcher searcher = new RoundTripSearcher(graph, defaultWeighting, TraversalMode.EDGE_BASED);
-        List<Path> paths = searcher.calcPaths(0, 1, 10, 1);
+        MultipleRoundTripsRouting searcher = new MultipleRoundTripsRouting(graph, defaultWeighting, TraversalMode.EDGE_BASED, 1, 10);
+        List<Path> paths = searcher.calcPaths(0, 1);
         assertEquals(paths.size(), 1);
         assertEquals(paths.get(0).getEdges().size(), 1);
     }
@@ -60,8 +60,8 @@ public class RoundTripSearcherTest {
                 graph.edge(0, 7).setDistance(1) //9
         );
 
-        RoundTripSearcher searcher = new RoundTripSearcher(graph, defaultWeighting, TraversalMode.EDGE_BASED);
-        searcher.calcPaths(0, 2, 10, 1);
+        MultipleRoundTripsRouting searcher = new MultipleRoundTripsRouting(graph, defaultWeighting, TraversalMode.EDGE_BASED, 1, 10);
+        searcher.calcPaths(0, 2);
 
     }
 

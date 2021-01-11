@@ -44,6 +44,8 @@ public class GHRequest {
     private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private Locale locale = Locale.US;
+    private double minDistance;
+    private double maxDistance;
 
     public GHRequest() {
         this(5);
@@ -190,6 +192,24 @@ public class GHRequest {
 
     public GHRequest setProfile(String profile) {
         this.profile = profile;
+        return this;
+    }
+
+    public double getMinDistance() {
+        return minDistance;
+    }
+
+    public GHRequest setMinDistance(double minDistance) {
+        this.minDistance = minDistance;
+        return this;
+    }
+
+    public double getMaxDistance() {
+        return maxDistance;
+    }
+
+    public GHRequest setMaxDistance(double maxDistance) {
+        this.maxDistance = maxDistance;
         return this;
     }
 

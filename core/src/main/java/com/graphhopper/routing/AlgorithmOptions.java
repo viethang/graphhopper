@@ -40,6 +40,8 @@ public class AlgorithmOptions {
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private double minDistance;
+    private double maxDistance;
 
     private AlgorithmOptions() {
     }
@@ -81,6 +83,12 @@ public class AlgorithmOptions {
             b.maxVisitedNodes(opts.maxVisitedNodes);
         if (!opts.hints.isEmpty())
             b.hints(opts.hints);
+        if (opts.minDistance >= 0) {
+            b.minDistance(opts.minDistance);
+        }
+        if (opts.maxDistance >= 0) {
+            b.minDistance(opts.maxDistance);
+        }
 
         return b;
     }
@@ -112,6 +120,14 @@ public class AlgorithmOptions {
 
     public PMap getHints() {
         return hints;
+    }
+
+    public double getMinDistance() {
+        return minDistance;
+    }
+
+    public double getMaxDistance() {
+        return maxDistance;
     }
 
     private void assertNotNull(Object optionValue, String optionName) {
@@ -158,6 +174,17 @@ public class AlgorithmOptions {
             this.opts.hints.putAll(hints);
             return this;
         }
+
+        public Builder minDistance(double minDistance) {
+            this.opts.minDistance = minDistance;
+            return this;
+        }
+
+        public Builder maxDistance(double maxDistance) {
+            this.opts.maxDistance = maxDistance;
+            return this;
+        }
+
 
         public AlgorithmOptions build() {
             if (buildCalled)

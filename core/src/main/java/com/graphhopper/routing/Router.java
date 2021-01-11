@@ -48,8 +48,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 public class Router {
@@ -122,12 +121,16 @@ public class Router {
                     weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
                     hints(request.getHints()).
+                    minDistance(request.getMinDistance()).
+                    maxDistance(request.getMaxDistance()).
                     build();
 
             if (ROUND_TRIP.equalsIgnoreCase(request.getAlgorithm())) {
                 return routeRoundTrip(request, algoOpts, weighting, profile, disableLM);
             } else if (ALT_ROUTE.equalsIgnoreCase(request.getAlgorithm())) {
                 return routeAlt(request, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
+            } else if (MULTIPLE_ROUND_TRIPS.equalsIgnoreCase(request.getAlgorithm())) {
+                return multipleRoute(request, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             } else {
                 return routeVia(request, algoOpts, weighting, profile, passThrough, forceCurbsides, disableCH, disableLM);
             }
@@ -219,6 +222,29 @@ public class Router {
         ResponsePath responsePath = concatenatePaths(request, weighting, queryGraph, result.paths, getWaypoints(qResults));
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
+        ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
+        ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
+        return ghRsp;
+    }
+
+    protected GHResponse multipleRoute(GHRequest request, AlgorithmOptions algoOpts, Weighting weighting, Profile profile, boolean passThrough, boolean forceCurbsides, boolean disableCH, boolean disableLM) {
+        GHResponse ghRsp = new GHResponse();
+        StopWatch sw = new StopWatch().start();
+        List<Snap> qResults = ViaRouting.lookup(encodingManager, request.getPoints(), weighting, locationIndex, request.getSnapPreventions(), request.getPointHints());
+        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+        // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
+        // the (possibly implementation specific) query graph used by PathCalculator
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, qResults);
+        PathCalculator pathCalculator = createPathCalculator(queryGraph, profile, algoOpts, disableCH, disableLM);
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, qResults, weighting.getFlagEncoder().getAccessEnc(), pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+
+        PathMerger pathMerger = createPathMerger(request, weighting, queryGraph);
+        for (Path path : result.paths) {
+            PointList waypoints = getWaypoints(qResults);
+            ResponsePath responsePath = pathMerger.doWork(waypoints, Collections.singletonList(path), encodingManager, translationMap.getWithFallBack(request.getLocale()));
+            ghRsp.add(responsePath);
+        }
+
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (qResults.size() - 1));
         return ghRsp;

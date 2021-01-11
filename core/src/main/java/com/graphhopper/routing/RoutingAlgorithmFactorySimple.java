@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
@@ -69,7 +70,8 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
             altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
             altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
             ra = altRouteAlgo;
-
+        } else if(MULTIPLE_ROUND_TRIPS.equalsIgnoreCase(algoStr)) {
+            ra = new MultipleRoundTripsRouting(g, weighting, TraversalMode.EDGE_BASED, opts.getMinDistance(), opts.getMaxDistance());
         } else {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }

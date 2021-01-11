@@ -92,7 +92,9 @@ public class RouteResource {
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
-            @QueryParam("gpx.millis") String timeString) {
+            @QueryParam("gpx.millis") String timeString,
+            @QueryParam("min_distance") @DefaultValue("1") double minDistance,
+            @QueryParam("max_distance") @DefaultValue("1000") double maxDistance) {
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
@@ -118,10 +120,13 @@ public class RouteResource {
                 setCurbsides(curbsides).
                 setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
+                setMinDistance(minDistance).
+                setMaxDistance(maxDistance).
                 getHints().
                 putObject(CALC_POINTS, calcPoints).
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
 
         if (minPathElevationPrecision != null) {
             request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);

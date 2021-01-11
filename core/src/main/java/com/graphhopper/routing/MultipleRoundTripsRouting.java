@@ -9,10 +9,8 @@ import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
 
-public class RoundTripSearcher extends AbstractRoutingAlgorithm {
-    protected IntObjectMap<SPTEntry> collectedEdges;
+public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     protected List<SPTEntry> lastEdges;
-    Map<Integer, Integer> edgeOccurrence = new HashMap(); // store the number of occurrences of an edge in collectedEdges
     protected PriorityQueue<SPTEntry> toBeCheckedEdges;
     protected SPTEntry currEdge;
     private int visitedNodes;
@@ -22,8 +20,13 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
     double minDistance;
 
 
-    public RoundTripSearcher(Graph graph, Weighting weighting, TraversalMode tMode) {
+    public MultipleRoundTripsRouting(Graph graph, Weighting weighting, TraversalMode tMode, double minDistance, double maxDistance) {
         super(graph, weighting, TraversalMode.EDGE_BASED);
+        if (minDistance > maxDistance) {
+            throw new AssertionError("Min distance cannot be smaller than max distance");
+        }
+        this.minDistance = minDistance;
+        this.maxDistance = maxDistance;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
     }
@@ -33,25 +36,17 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
         this.to = to;
         this.from = from;
         currEdge = new SPTEntry(from, 0);
-        if (!traversalMode.isEdgeBased()) {
-            collectedEdges.put(from, currEdge);
-        }
+
         runAlgo();
         return extractPath();
     }
 
-    public List<Path> calcPaths(int from, int to, double maxDistance, double minDistance) {
-        if (minDistance > maxDistance) {
-            throw new AssertionError("Min distance cannot be smaller than max distance");
-        }
-        this.maxDistance = maxDistance;
-        this.minDistance = minDistance;
+    public List<Path> calcPaths(int from, int to) {
+
         checkAlreadyRun();
         this.to = to;
         currEdge = new SPTEntry(from, 0);
-        if (!traversalMode.isEdgeBased()) {
-            collectedEdges.put(from, currEdge);
-        }
+
         runAlgo();
 
         return extractPaths();
@@ -99,7 +94,6 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
                 if (currEdge.edge == iter.getEdge()) {
                     continue;
                 }
-                int traversalId = createTraversalId(iter);
 
                 double nEdgeLength = iter.getDistance();
 
@@ -117,8 +111,6 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
                 if (repeatedEdge(nEdge)) {
                     continue;
                 }
-                collectedEdges.put(traversalId, nEdge);
-
                 if (iter.getAdjNode() == this.to) {
                     if (nEdge.weight >= minDistance) {
                         // the new edge is adjacent to the destination, add it to the lastEdges list
@@ -147,19 +139,9 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
     }
 
 
-    private int createTraversalId(EdgeIterator iter) {
-        // return a unique id for and edge based on it's occurrence in collectedEdges
-        int occurrence = edgeOccurrence.get(iter.getEdge()) != null ? edgeOccurrence.get(iter.getEdge()) : 0;
-        int edgeId = iter.getEdge();
-        edgeId = edgeId << occurrence + 1;
-        int nodeA = iter.getBaseNode();
-        int nodeB = iter.getAdjNode();
-        return nodeA > nodeB ? edgeId + 1 : edgeId;
-    }
 
     private void initCollections(int size) {
         toBeCheckedEdges = new PriorityQueue<>(size);
-        collectedEdges = new GHIntObjectHashMap<>(size);
         lastEdges = new LinkedList<>();
 
 
@@ -185,6 +167,11 @@ public class RoundTripSearcher extends AbstractRoutingAlgorithm {
     List<Path> filter(List<Path> paths) {
         List<Path> filteredPath = new LinkedList<>();
         // add valid paths here
+        for (Path path: paths) {
+            if (true) {
+                filteredPath.add(path);
+            }
+        }
         return filteredPath;
     }
 }
