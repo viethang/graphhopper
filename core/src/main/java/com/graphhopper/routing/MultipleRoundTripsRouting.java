@@ -1,23 +1,29 @@
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.coll.GHIntObjectHashMap;
+import com.google.common.collect.MinMaxPriorityQueue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
 
 public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
-    protected List<SPTEntry> lastEdges;
-    protected PriorityQueue<SPTEntry> toBeCheckedEdges;
-    protected SPTEntry currEdge;
+    protected List<MRTEntry> lastEdges;
+    protected MinMaxPriorityQueue<MRTEntry> toBeCheckedEdges;
+    protected MRTEntry currEdge;
     private int visitedNodes;
     private int to = -1;
     private int from;
     double maxDistance;
     double minDistance;
+
+    private int MAX_TO_CHECK_EDGES_NB = 20;
+    private int MAX_TRIP_NB = 5;
 
 
     public MultipleRoundTripsRouting(Graph graph, Weighting weighting, TraversalMode tMode, double minDistance, double maxDistance) {
@@ -35,7 +41,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         checkAlreadyRun();
         this.to = to;
         this.from = from;
-        currEdge = new SPTEntry(from, 0);
+        currEdge = new MRTEntry(from, 0);
 
         runAlgo();
         return extractPath();
@@ -45,7 +51,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
         checkAlreadyRun();
         this.to = to;
-        currEdge = new SPTEntry(from, 0);
+        currEdge = new MRTEntry(from, 0);
 
         runAlgo();
 
@@ -66,7 +72,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         List<Path> paths = new ArrayList<>();
 
         if (!lastEdges.isEmpty()) {
-            for (SPTEntry edge : lastEdges) {
+            for (MRTEntry edge : lastEdges) {
                 Path path = buildPath(edge);
                 paths.add(path);
             }
@@ -75,14 +81,17 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         return filter(paths);
     }
 
-    protected Path buildPath(SPTEntry lastEdge) {
+    protected Path buildPath(MRTEntry lastEdge) {
         // trace back from lastEdge to return the full path
         Path path = PathExtractor.extractPath(graph, weighting, lastEdge);
         return path;
     }
 
     protected void runAlgo() {
-        while (true) {
+        EncodingManager encodingManager = ((GraphHopperStorage) graph.getBaseGraph()).getEncodingManager();
+// cf routing/ev/RoadClass RoadAccess
+        boolean done = false;
+        while (!done) {
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
@@ -92,12 +101,14 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
             while (iter.next()) {
 
                 if (currEdge.edge == iter.getEdge()) {
-                    continue;
+                    if (currEdge.weight < minDistance / 2) {
+                        continue;
+                    }
                 }
 
                 double nEdgeLength = iter.getDistance();
 
-                SPTEntry nEdge = new SPTEntry(iter.getEdge(),
+                MRTEntry nEdge = new MRTEntry(iter.getEdge(),
                         iter.getAdjNode(),
                         currEdge.weight + nEdgeLength
                 );
@@ -113,11 +124,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
-                // don't allow cycle if still too close to the origin or the destination
-                // this make sense especially when from = to
-                if (repeatedVertext(nEdge)
-                        && (nEdge.weight < 3 * maxDistance/8 || nEdge.weight > 5 * maxDistance/8)
-                        && nEdge.adjNode != this.to) {
+                if (repeatedVertex(nEdge)) {
                     continue;
                 }
 
@@ -126,12 +133,46 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                         // the new edge is adjacent to the destination, add it to the lastEdges list
                         // no need to check edges adjacent to this edge any more
                         lastEdges.add(nEdge);
+                        if (lastEdges.size() >= MAX_TRIP_NB) {
+                            done = true;
+                            break;
+                        }
                     }
                     continue;
                 }
 
                 if (iter.getAdjNode() == this.from) {
                     continue;
+                }
+
+
+                // calculate edge score
+                EnumEncodedValue roadClassEnv = encodingManager.getEnumEncodedValue("road_class", Enum.class);
+                Enum roadClass = iter.get(roadClassEnv);
+                if (RoadClass.MOTORWAY.equals(roadClass) || RoadClass.TRUNK.equals(roadClass) ||
+                        RoadClass.PRIMARY.equals(roadClass) ||
+                        RoadClass.SECONDARY.equals(roadClass) ||
+                        RoadClass.SECONDARY.equals(roadClass)) {
+                    nEdge.score -= 10;
+                }
+
+                if (RoadClass.SECONDARY.equals(roadClass) ||
+                        RoadClass.TERTIARY.equals(roadClass)) {
+                    nEdge.score -= 5;
+                }
+
+                if (RoadClass.RESIDENTIAL.equals(roadClass)) {
+                    nEdge.score += 2;
+                }
+
+                if (RoadClass.FOOTWAY.equals(roadClass)) {
+                    nEdge.score += 5;
+                }
+                if (RoadClass.PATH.equals(roadClass)) {
+                    nEdge.score += 5;
+                }
+                if (RoadClass.PEDESTRIAN.equals(roadClass)) {
+                    nEdge.score += 3;
                 }
 
                 toBeCheckedEdges.add(nEdge);
@@ -149,19 +190,28 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     }
 
 
-
     private void initCollections(int size) {
-        toBeCheckedEdges = new PriorityQueue<>(size);
+        toBeCheckedEdges = MinMaxPriorityQueue
+                .orderedBy(
+                        new Comparator<MRTEntry>(
+                        ) {
+                            @Override
+                            public int compare(MRTEntry t1, MRTEntry t2) {
+                                return t2.score - t1.score;
+                            }
+                        })
+                .maximumSize(1000)
+                .create();
+
+
         lastEdges = new LinkedList<>();
-
-
     }
 
-    private boolean repeatedEdge(SPTEntry nEdge) {
+    private boolean repeatedEdge(MRTEntry nEdge) {
         // check if the path repeats an edge in the same direction
-        SPTEntry ancestor = nEdge;
+        MRTEntry ancestor = nEdge;
         while (ancestor.parent != null) {
-            ancestor = ancestor.parent;
+            ancestor = (MRTEntry) ancestor.parent;
             if (ancestor.edge == nEdge.edge && ancestor.adjNode == nEdge.adjNode) {
                 return true;
             }
@@ -169,12 +219,16 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         return false;
     }
 
-    private boolean repeatedVertext(SPTEntry nEdge) {
-        SPTEntry ancestor = nEdge;
+    private boolean repeatedVertex(MRTEntry nEdge) {
+        int repeated = 0;
+        MRTEntry ancestor = nEdge;
         while (ancestor.parent != null) {
-            ancestor = ancestor.parent;
+            ancestor = (MRTEntry) ancestor.parent;
             if (ancestor.adjNode == nEdge.adjNode) {
-                return true;
+                repeated++;
+                if (repeated > 1) {
+                    return true;
+                }
             }
         }
         return false;
@@ -188,7 +242,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     List<Path> filter(List<Path> paths) {
         List<Path> filteredPath = new LinkedList<>();
         // add valid paths here
-        for (Path path: paths) {
+        for (Path path : paths) {
             if (true) {
                 filteredPath.add(path);
             }
