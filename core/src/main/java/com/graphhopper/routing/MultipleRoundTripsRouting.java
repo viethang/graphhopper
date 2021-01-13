@@ -108,9 +108,19 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
+                // we don't allow repeated an edge in the same direction
                 if (repeatedEdge(nEdge)) {
                     continue;
                 }
+
+                // don't allow cycle if still too close to the origin or the destination
+                // this make sense especially when from = to
+                if (repeatedVertext(nEdge)
+                        && (nEdge.weight < 3 * maxDistance/8 || nEdge.weight > 5 * maxDistance/8)
+                        && nEdge.adjNode != this.to) {
+                    continue;
+                }
+
                 if (iter.getAdjNode() == this.to) {
                     if (nEdge.weight >= minDistance) {
                         // the new edge is adjacent to the destination, add it to the lastEdges list
@@ -153,6 +163,17 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         while (ancestor.parent != null) {
             ancestor = ancestor.parent;
             if (ancestor.edge == nEdge.edge && ancestor.adjNode == nEdge.adjNode) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean repeatedVertext(SPTEntry nEdge) {
+        SPTEntry ancestor = nEdge;
+        while (ancestor.parent != null) {
+            ancestor = ancestor.parent;
+            if (ancestor.adjNode == nEdge.adjNode) {
                 return true;
             }
         }
