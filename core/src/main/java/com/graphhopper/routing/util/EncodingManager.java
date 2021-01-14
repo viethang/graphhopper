@@ -322,6 +322,9 @@ public class EncodingManager implements EncodedValueLookup {
                 // TODO introduce road_access for different vehicles? But how to create it in DefaultTagParserFactory?
                 _addEdgeTagParser(new OSMRoadAccessParser(), false, false);
             }
+            if (!em.hasEncodedValue(TrackType.KEY)) {
+                _addEdgeTagParser(new OSMTrackTypeParser(), false, false);
+            }
 
             // ensure that SpatialRuleParsers come after required EncodedValues like max_speed or road_access
             // TODO can we avoid this hack without complex dependency management?
