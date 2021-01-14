@@ -1,7 +1,8 @@
 package com.graphhopper.routing;
 
 public class MRTEntry extends SPTEntry {
-    public int score;
+    public double score;
+    public int indexOnPath;
     public MRTEntry(int edgeId, int adjNode, double weight) {
         super(edgeId, adjNode, weight);
     }
@@ -10,7 +11,7 @@ public class MRTEntry extends SPTEntry {
         super(node, weight);
     }
 
-    public int getScore() {
+    public double getScore() {
         return score;
     }
 }
