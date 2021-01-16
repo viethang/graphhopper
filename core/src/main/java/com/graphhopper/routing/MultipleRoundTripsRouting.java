@@ -3,6 +3,7 @@ package com.graphhopper.routing;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -10,10 +11,14 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     protected List<MRTEntry> lastEdges;
+    protected List<MRTEntry> allToBeCheckedEdges;
     protected MinMaxPriorityQueue<MRTEntry> toBeCheckedEdges;
     protected MRTEntry currEdge;
     private int visitedNodes;
@@ -23,8 +28,8 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     double minDistance;
     EncodingManager encodingManager;
 
-    private int MAX_TRIP_NB = 20;
-    private int MAX_EDGE_POOL_NB = 10000;
+    private int MAX_TRIP_NB = 50;
+    private int MAX_EDGE_POOL_NB = 5000;
 
 
     public MultipleRoundTripsRouting(Graph graph, Weighting weighting, TraversalMode tMode, double minDistance, double maxDistance) {
@@ -45,7 +50,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         this.from = from;
         currEdge = new MRTEntry(from, 0);
 
-        runAlgo();
         return extractPath();
     }
 
@@ -55,9 +59,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         this.to = to;
         currEdge = new MRTEntry(from, 0);
 
-        runAlgo();
-
-        return extractPaths();
+        return runAlgo();
     }
 
     @Override
@@ -89,11 +91,10 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         return path;
     }
 
-    protected void runAlgo() {
-// cf routing/ev/RoadClass RoadAccess
+    protected List<Path> runAlgo() {
         boolean done = false;
-        int nbEdges = 0;
-        int nbEdgesAdded2Pool = 0;
+        double returnDistance = maxDistance / 2;
+        List<MRTEntry> arrivedEdges = new LinkedList<>();
         while (!done) {
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
@@ -102,13 +103,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
             int currNode = currEdge.adjNode;
             EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
-                nbEdges++;
-
-                if (currEdge.edge == iter.getEdge()) {
-                    if (currEdge.weight < minDistance / 2) {
-                        continue;
-                    }
-                }
 
                 double nEdgeLength = iter.getDistance();
                 MRTEntry nEdge = new MRTEntry(iter.getEdge(),
@@ -117,46 +111,35 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
                 nEdge.parent = currEdge;
 
-                nEdge.indexOnPath = currEdge.indexOnPath + 1;
-
-                if (iter.getAdjNode() == this.to) {
-                    if (nEdge.weight >= minDistance) {
-                        // the new edge is adjacent to the destination, add it to the lastEdges list
-                        // no need to check edges adjacent to this edge any more
-                        lastEdges.add(nEdge);
-                        if (lastEdges.size() >= MAX_TRIP_NB) {
-                            done = true;
-                            break;
-                        }
+                if (nEdge.adjNode == this.to) {
+                    if (nEdge.weight > minDistance) {
+                        arrivedEdges.add(nEdge);
                     }
                     continue;
                 }
 
-                if (nEdge.weight > maxDistance) {
-                    continue;
-                }
-
-
-                calculateEdgeScore(nEdge, iter);
-
-                // we don't allow repeated an edge in the same direction
                 if (repeatedEdge(nEdge)) {
                     continue;
                 }
 
-                if (checkAndPenalizeRepeatedVertex(nEdge, nEdgeLength)) {
+                if (repeatedVertex(nEdge)) {
                     continue;
                 }
 
-
-
-                if (iter.getAdjNode() == this.from) {
+                if (nEdge.weight >= returnDistance) {
+                    // the new edge is adjacent to the destination, add it to the lastEdges list
+                    // no need to check edges adjacent to this edge any more
+                    lastEdges.add(nEdge);
+                    if (lastEdges.size() >= MAX_TRIP_NB) {
+                        done = true;
+                        break;
+                    }
                     continue;
                 }
 
+                calculateEdgeScore(nEdge, iter);
 
                 toBeCheckedEdges.add(nEdge);
-                nbEdgesAdded2Pool++;
             }
 
             if (toBeCheckedEdges.isEmpty()) {
@@ -169,7 +152,29 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
         }
 
-        System.out.println(String.format("Finished. nbEdges: %d, nbEdgesAdded2Pool: %d, lastEdges: %d", nbEdges, nbEdgesAdded2Pool, lastEdges.size()));
+
+        List<Path> paths = new LinkedList<>();
+        for (MRTEntry edge : lastEdges) {
+            // use Dijkstra to find shortest path from the last edges to the destination
+            // then create the combined path
+            Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.EDGE_BASED);
+            dijkstra.calcPath(edge.adjNode, this.to);
+            SPTEntry firstEdgeOfDijkstraPath = getFirstAncestorEdge(dijkstra.currEdge);
+            firstEdgeOfDijkstraPath.parent = edge;
+
+            Path path = PathExtractor.extractPath(graph, weighting, dijkstra.currEdge);
+            paths.add(path);
+        }
+
+        return paths;
+    }
+
+    private SPTEntry getFirstAncestorEdge(SPTEntry edge) {
+        SPTEntry ancestor = edge;
+        while (ancestor.parent.edge != EdgeIterator.NO_EDGE) {
+            ancestor = ancestor.parent;
+        }
+        return ancestor;
     }
 
     private void calculateEdgeScore(MRTEntry nEdge, EdgeIterator iter) {
@@ -178,35 +183,39 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         // calculate edge score
         EnumEncodedValue roadClassEnv = encodingManager.getEnumEncodedValue("road_class", Enum.class);
         Enum roadClass = iter.get(roadClassEnv);
+        EnumEncodedValue trackTypeEnv = encodingManager.getEnumEncodedValue("track_type", Enum.class);
+        Enum trackType = TrackType.MISSING;
+        try {
+            trackType = iter.get(trackTypeEnv);
+        } catch (Exception e) {
+            System.out.println("Exception tracktype" + e.toString());
+        }
         int scoreCoeff = 0;
         if (RoadClass.MOTORWAY.equals(roadClass) || RoadClass.TRUNK.equals(roadClass) ||
                 RoadClass.PRIMARY.equals(roadClass)) {
             scoreCoeff -= 10;
-        }
-
-
-        if (RoadClass.SECONDARY.equals(roadClass) ||
+        } else if (RoadClass.SECONDARY.equals(roadClass) ||
                 RoadClass.TERTIARY.equals(roadClass)) {
             scoreCoeff -= 5;
-        }
-
-//                if (RoadClass.RESIDENTIAL.equals(roadClass)) {
-//                    scoreCoeff += 2;
-//                }
-
-        if (RoadClass.FOOTWAY.equals(roadClass)) {
+        } else if (RoadClass.FOOTWAY.equals(roadClass)) {
             scoreCoeff += 5;
-        }
-        if (RoadClass.PATH.equals(roadClass)) {
+        } else if (RoadClass.PATH.equals(roadClass)) {
             scoreCoeff += 10;
-        }
-        if (RoadClass.PEDESTRIAN.equals(roadClass)) {
+        } else if (RoadClass.PEDESTRIAN.equals(roadClass)) {
             scoreCoeff += 3;
+        } else if (!TrackType.MISSING.equals(trackType)) {
+            scoreCoeff += 5;
+        } else {
+            scoreCoeff += 1;
         }
-        nEdge.score = ((MRTEntry) nEdge.parent).score + scoreCoeff * nEdgeLength;
+
+        nEdge.score =
+//                ((MRTEntry) nEdge.parent).score +
+                scoreCoeff;
     }
 
     private void initCollections() {
+        allToBeCheckedEdges = new LinkedList<>();
         toBeCheckedEdges = MinMaxPriorityQueue
                 .orderedBy(
                         new Comparator<MRTEntry>(
@@ -225,15 +234,37 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         lastEdges = new LinkedList<>();
     }
 
-    private boolean repeatedEdge(MRTEntry nEdge) {
-        // check if the path repeats an edge in the same direction
+
+    private boolean checkRepeatedEdgeCondition(MRTEntry nEdge) {
         MRTEntry ancestor = nEdge;
+        int repeated = 0;
+        // forbid 180 degree turn if already too far
+        // should allow this only around the furthest point of the trip
+        if (((MRTEntry) nEdge.parent).edge == nEdge.edge && (nEdge.weight > maxDistance / 2 + 500 || nEdge.weight < maxDistance / 2 - 500)) {
+            return true;
+        }
         while (ancestor.parent != null) {
             ancestor = (MRTEntry) ancestor.parent;
-            if (ancestor.edge == nEdge.edge && ancestor.adjNode == nEdge.adjNode) {
+
+            // forbid repeating an edge in the same direction
+            if (ancestor.edge == nEdge.edge) {
+                repeated++;
+                if (ancestor.adjNode == nEdge.adjNode)
+                    return true;
+
+            }
+
+            if (ancestor.weight > maxDistance / 2) {
                 return true;
             }
+
+            //
+            // while repeating an edge in a different direction is allowed
+            // repeating more than once is forbidden
+            if (repeated > 1)
+                return true;
         }
+
         return false;
     }
 
@@ -245,23 +276,53 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
             ancestor = (MRTEntry) ancestor.parent;
             ancestorDepth++;
             if (ancestor.adjNode == nEdge.adjNode) {
+                if (ancestor.weight > maxDistance / 2) {
+                    return true;
+                }
                 repeated++;
+                if (ancestor.weight > maxDistance / 2 + 500) {
+                    return true;
+                }
+
                 // penalize edges that passes through a vertex already on the path
                 // the penalized quantity depends on how deep the repeated vertex is
                 // and the distance to the destination
                 // We want to avoid immediate 180 degree turn and short subcycle
                 //
 
-//                if (nEdge.weight < maxDistance/2) {
-                    nEdge.score -= nEdgeLength * (5 * (1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
-//                } else {
-//                    nEdge.score -= nEdgeLength * ((1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
-//                }
+
+                if (nEdge.weight < maxDistance / 2) {
+                    nEdge.score -= (10 * (1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
+                } else {
+                    nEdge.score -= (5 * (1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
+                }
 
                 // we don't allow passing 3 times through the same vertex
                 if (repeated > 1) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean repeatedEdge(SPTEntry nEdge) {
+        SPTEntry ancestor = nEdge;
+        while (ancestor.parent != null) {
+            ancestor = ancestor.parent;
+            if (ancestor.edge == nEdge.edge) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean repeatedVertex(SPTEntry nEdge) {
+        SPTEntry ancestor = nEdge;
+        while (ancestor.parent != null) {
+            ancestor = ancestor.parent;
+            if (ancestor.adjNode == nEdge.adjNode) {
+                return true;
             }
         }
         return false;
