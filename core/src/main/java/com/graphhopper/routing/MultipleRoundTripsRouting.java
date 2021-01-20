@@ -3,6 +3,7 @@ package com.graphhopper.routing;
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
@@ -126,6 +127,11 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
+                double score = calculateEdgeScore(nEdge, iter);
+                if (score == Integer.MIN_VALUE) {
+                    continue;
+                }
+
                 if (nEdge.weight >= returnDistance) {
                     // the new edge is adjacent to the destination, add it to the lastEdges list
                     // no need to check edges adjacent to this edge any more
@@ -137,7 +143,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
-                calculateEdgeScore(nEdge, iter);
 
                 toBeCheckedEdges.add(nEdge);
             }
@@ -177,21 +182,20 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         return ancestor;
     }
 
-    private void calculateEdgeScore(MRTEntry nEdge, EdgeIterator iter) {
-        double nEdgeLength = iter.getDistance();
-
+    private double calculateEdgeScore(MRTEntry nEdge, EdgeIterator iter) {
         // calculate edge score
-        EnumEncodedValue roadClassEnv = encodingManager.getEnumEncodedValue("road_class", Enum.class);
+        EnumEncodedValue roadClassEnv = encodingManager.getEnumEncodedValue(RoadClass.KEY, Enum.class);
         Enum roadClass = iter.get(roadClassEnv);
-        EnumEncodedValue trackTypeEnv = encodingManager.getEnumEncodedValue("track_type", Enum.class);
-        Enum trackType = TrackType.MISSING;
-        try {
-            trackType = iter.get(trackTypeEnv);
-        } catch (Exception e) {
-            System.out.println("Exception tracktype" + e.toString());
-        }
+        EnumEncodedValue trackTypeEnv = encodingManager.getEnumEncodedValue(TrackType.KEY, Enum.class);
+        Enum trackType = iter.get(trackTypeEnv);
+        EnumEncodedValue roadEnviEnv = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, Enum.class);
+        Enum roadEnv = iter.get(roadEnviEnv);
+
         int scoreCoeff = 0;
-        if (RoadClass.MOTORWAY.equals(roadClass) || RoadClass.TRUNK.equals(roadClass) ||
+        if (roadEnv.equals(RoadEnvironment.FERRY)) {
+            // should never use ferry
+            scoreCoeff = Integer.MIN_VALUE;
+        } else if (RoadClass.MOTORWAY.equals(roadClass) || RoadClass.TRUNK.equals(roadClass) ||
                 RoadClass.PRIMARY.equals(roadClass)) {
             scoreCoeff -= 10;
         } else if (RoadClass.SECONDARY.equals(roadClass) ||
@@ -209,9 +213,8 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
             scoreCoeff += 1;
         }
 
-        nEdge.score =
-//                ((MRTEntry) nEdge.parent).score +
-                scoreCoeff;
+        nEdge.score = scoreCoeff;
+        return scoreCoeff;
     }
 
     private void initCollections() {
