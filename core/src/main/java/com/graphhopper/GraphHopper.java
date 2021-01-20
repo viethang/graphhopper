@@ -37,7 +37,10 @@ import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultFlagEncoderFactory;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
@@ -186,33 +189,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Configures the underlying storage and response to be used on a well equipped server. Result
-     * also optimized for usage in the web module i.e. try reduce network IO.
-     */
-    public GraphHopper forServer() {
-        routerConfig.setSimplifyResponse(true);
-        return setInMemory();
-    }
-
-    /**
-     * Configures the underlying storage to be used on a Desktop computer or within another Java
-     * application with enough RAM but no network latency.
-     */
-    public GraphHopper forDesktop() {
-        routerConfig.setSimplifyResponse(false);
-        return setInMemory();
-    }
-
-    /**
-     * Configures the underlying storage to be used on a less powerful machine like Android or
-     * Raspberry Pi with only few MB of RAM.
-     */
-    public GraphHopper forMobile() {
-        routerConfig.setSimplifyResponse(false);
-        return setMemoryMapped();
-    }
-
-    /**
      * Precise location resolution index means also more space (disc/RAM) could be consumed and
      * probably slower query times, which would be e.g. not suitable for Android. The resolution
      * specifies the tile width (in meter).
@@ -230,15 +206,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * This method call results in an in-memory graph.
-     */
-    public GraphHopper setInMemory() {
-        ensureNotLoaded();
-        dataAccessType = DAType.RAM_STORE;
-        return this;
-    }
-
-    /**
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
@@ -251,15 +218,6 @@ public class GraphHopper implements GraphHopperAPI {
             dataAccessType = DAType.RAM_STORE;
         else
             dataAccessType = DAType.RAM;
-        return this;
-    }
-
-    /**
-     * Enable memory mapped configuration if not enough memory is available on the target platform.
-     */
-    public GraphHopper setMemoryMapped() {
-        ensureNotLoaded();
-        dataAccessType = DAType.MMAP;
         return this;
     }
 
@@ -535,8 +493,6 @@ public class GraphHopper implements GraphHopperAPI {
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
-        routerConfig.setCHDisablingAllowed(ghConfig.getBool(CH.INIT_DISABLING_ALLOWED, routerConfig.isCHDisablingAllowed()));
-        routerConfig.setLMDisablingAllowed(ghConfig.getBool(Landmark.INIT_DISABLING_ALLOWED, routerConfig.isLMDisablingAllowed()));
         int activeLandmarkCount = ghConfig.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, lmPreparationHandler.getLandmarks()));
         if (activeLandmarkCount > lmPreparationHandler.getLandmarks())
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarkCount
@@ -576,12 +532,12 @@ public class GraphHopper implements GraphHopperAPI {
                 : ghConfig.getBool("graph.elevation.calc_mean", false);
 
         String cacheDirStr = ghConfig.getString("graph.elevation.cache_dir", "");
-        if (cacheDirStr.isEmpty())
-            cacheDirStr = ghConfig.getString("graph.elevation.cachedir", "");
+        if (cacheDirStr.isEmpty() && ghConfig.has("graph.elevation.cachedir"))
+            throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
         String baseURL = ghConfig.getString("graph.elevation.base_url", "");
-        if (baseURL.isEmpty())
-            ghConfig.getString("graph.elevation.baseurl", "");
+        if (baseURL.isEmpty() && ghConfig.has("graph.elevation.baseurl"))
+            throw new IllegalArgumentException("use graph.elevation.base_url not baseurl in configuration");
 
         boolean removeTempElevationFiles = ghConfig.getBool("graph.elevation.cgiar.clear", true);
         removeTempElevationFiles = ghConfig.getBool("graph.elevation.clear", removeTempElevationFiles);
@@ -978,7 +934,7 @@ public class GraphHopper implements GraphHopperAPI {
             sw = new StopWatch().start();
             new EdgeElevationInterpolator(ghStorage, roadEnvEnc, RoadEnvironment.FERRY).execute();
             ghStorage.getProperties().put(INTERPOLATION_KEY, true);
-            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds()+"s");
+            logger.info("Bridge interpolation " + (int) bridge + "s, " + "tunnel interpolation " + (int) tunnel + "s, ferry interpolation " + (int) sw.stop().getSeconds() + "s");
         }
     }
 
@@ -1188,7 +1144,7 @@ public class GraphHopper implements GraphHopperAPI {
         fullyLoaded = true;
     }
 
-    public boolean getFullyLoaded(){
+    public boolean getFullyLoaded() {
         return fullyLoaded;
     }
 
