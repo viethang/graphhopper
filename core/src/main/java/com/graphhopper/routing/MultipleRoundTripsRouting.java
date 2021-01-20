@@ -7,6 +7,7 @@ import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.HikingWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -162,7 +163,8 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         for (MRTEntry edge : lastEdges) {
             // use Dijkstra to find shortest path from the last edges to the destination
             // then create the combined path
-            Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.EDGE_BASED);
+            Weighting hikingWeighting = new HikingWeighting(weighting, encodingManager);
+            Dijkstra dijkstra = new Dijkstra(graph, hikingWeighting, TraversalMode.EDGE_BASED);
             dijkstra.calcPath(edge.adjNode, this.to);
             SPTEntry firstEdgeOfDijkstraPath = getFirstAncestorEdge(dijkstra.currEdge);
             firstEdgeOfDijkstraPath.parent = edge;
