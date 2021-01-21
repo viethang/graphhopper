@@ -12,11 +12,11 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     protected List<MRTEntry> lastEdges;
@@ -170,10 +170,11 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
             firstEdgeOfDijkstraPath.parent = edge;
 
             Path path = PathExtractor.extractPath(graph, weighting, dijkstra.currEdge);
+//            Path path = PathExtractor.extractPath(graph, weighting, edge);
             paths.add(path);
         }
 
-        return paths;
+        return filter(paths);
     }
 
     private SPTEntry getFirstAncestorEdge(SPTEntry edge) {
@@ -192,7 +193,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         Enum trackType = iter.get(trackTypeEnv);
         EnumEncodedValue roadEnviEnv = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, Enum.class);
         Enum roadEnv = iter.get(roadEnviEnv);
-
         int scoreCoeff = 0;
         if (roadEnv.equals(RoadEnvironment.FERRY)) {
             // should never use ferry
@@ -239,78 +239,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         lastEdges = new LinkedList<>();
     }
 
-
-    private boolean checkRepeatedEdgeCondition(MRTEntry nEdge) {
-        MRTEntry ancestor = nEdge;
-        int repeated = 0;
-        // forbid 180 degree turn if already too far
-        // should allow this only around the furthest point of the trip
-        if (((MRTEntry) nEdge.parent).edge == nEdge.edge && (nEdge.weight > maxDistance / 2 + 500 || nEdge.weight < maxDistance / 2 - 500)) {
-            return true;
-        }
-        while (ancestor.parent != null) {
-            ancestor = (MRTEntry) ancestor.parent;
-
-            // forbid repeating an edge in the same direction
-            if (ancestor.edge == nEdge.edge) {
-                repeated++;
-                if (ancestor.adjNode == nEdge.adjNode)
-                    return true;
-
-            }
-
-            if (ancestor.weight > maxDistance / 2) {
-                return true;
-            }
-
-            //
-            // while repeating an edge in a different direction is allowed
-            // repeating more than once is forbidden
-            if (repeated > 1)
-                return true;
-        }
-
-        return false;
-    }
-
-    private boolean checkAndPenalizeRepeatedVertex(MRTEntry nEdge, double nEdgeLength) {
-        int repeated = 0;
-        MRTEntry ancestor = nEdge;
-        int ancestorDepth = 0;
-        while (ancestor.parent != null) {
-            ancestor = (MRTEntry) ancestor.parent;
-            ancestorDepth++;
-            if (ancestor.adjNode == nEdge.adjNode) {
-                if (ancestor.weight > maxDistance / 2) {
-                    return true;
-                }
-                repeated++;
-                if (ancestor.weight > maxDistance / 2 + 500) {
-                    return true;
-                }
-
-                // penalize edges that passes through a vertex already on the path
-                // the penalized quantity depends on how deep the repeated vertex is
-                // and the distance to the destination
-                // We want to avoid immediate 180 degree turn and short subcycle
-                //
-
-
-                if (nEdge.weight < maxDistance / 2) {
-                    nEdge.score -= (10 * (1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
-                } else {
-                    nEdge.score -= (5 * (1 - nEdge.weight / maxDistance) * (1 - ancestorDepth / nEdge.indexOnPath));
-                }
-
-                // we don't allow passing 3 times through the same vertex
-                if (repeated > 1) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private boolean repeatedEdge(SPTEntry nEdge) {
         SPTEntry ancestor = nEdge;
         while (ancestor.parent != null) {
@@ -342,10 +270,77 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         List<Path> filteredPath = new LinkedList<>();
         // add valid paths here
         for (Path path : paths) {
-            if (true) {
+            if (path.getDistance() < 1.2 * maxDistance) {
                 filteredPath.add(path);
             }
         }
+        filteredPath.sort(new Comparator<Path>() {
+            @Override
+            public int compare(Path p1, Path p2) {
+                double eleScore1 = calculateElevationScore(p1);
+                double eleScore2 = calculateElevationScore(p2);
+                if (eleScore1 > eleScore2) {
+                    return 1;
+                } else if (eleScore1 < eleScore2) {
+                    return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
         return filteredPath;
     }
+
+    private double[] calcAscendDescend(final PointList pointList) {
+        double ascendMeters = 0;
+        double descendMeters = 0;
+        double lastEle = pointList.getEle(0);
+        for (int i = 1; i < pointList.size(); ++i) {
+            double ele = pointList.getEle(i);
+            double diff = Math.abs(ele - lastEle);
+
+            if (ele > lastEle)
+                ascendMeters += diff;
+            else
+                descendMeters += diff;
+
+            lastEle = ele;
+
+        }
+
+        return new double[]{ascendMeters, descendMeters};
+    }
+
+    private double calculateElevationScore(Path path) {
+        PointList points = new PointList();
+        final double[] elevations = new double[]{Double.MIN_VALUE, Double.MIN_VALUE, 0};
+        //store elevation of the origin, elevation of the highest points and accumulated ascend
+        path.forEveryEdge(new Path.EdgeVisitor() {
+            @Override
+            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
+                PointList pl = eb.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
+                if (index == 0) {
+                    elevations[0] = pl.getEle(0);
+                    elevations[1] = pl.getEle(0);
+                }
+                for (int j = 0; j < pl.getSize(); j++) {
+                    points.add(pl, j);
+                    if (pl.getEle(j) > elevations[1]) {
+                        elevations[1] = pl.getEle(j);
+                    }
+                }
+                elevations[2] += calcAscendDescend(pl)[0];
+            }
+
+            @Override
+            public void finish() {
+
+            }
+        });
+
+        return 1 - (elevations[1] - elevations[0]) / elevations[2];
+
+
+    }
+
 }
