@@ -16,7 +16,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     protected List<MRTEntry> lastEdges;
@@ -30,7 +32,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
     double minDistance;
     EncodingManager encodingManager;
 
-    private int MAX_TRIP_NB = 50;
+    private int MAX_TRIP_NB = 100;
     private int MAX_EDGE_POOL_NB = 5000;
 
 
@@ -74,19 +76,6 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
         return createEmptyPath();
     }
 
-    protected List<Path> extractPaths() {
-        List<Path> paths = new ArrayList<>();
-
-        if (!lastEdges.isEmpty()) {
-            for (MRTEntry edge : lastEdges) {
-                Path path = buildPath(edge);
-                paths.add(path);
-            }
-        }
-
-        return filter(paths);
-    }
-
     protected Path buildPath(MRTEntry lastEdge) {
         // trace back from lastEdge to return the full path
         Path path = PathExtractor.extractPath(graph, weighting, lastEdge);
@@ -95,7 +84,8 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
     protected List<Path> runAlgo() {
         boolean done = false;
-        double returnDistance = maxDistance / 2;
+        double maxReturnDistance = maxDistance / 2 + 2000;
+        double minReturnDistance = maxDistance / 2 - 2000;
         List<MRTEntry> arrivedEdges = new LinkedList<>();
         while (!done) {
             visitedNodes++;
@@ -133,7 +123,7 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                     continue;
                 }
 
-                if (nEdge.weight >= returnDistance) {
+                if (nEdge.weight >= minReturnDistance) {
                     // the new edge is adjacent to the destination, add it to the lastEdges list
                     // no need to check edges adjacent to this edge any more
                     lastEdges.add(nEdge);
@@ -141,6 +131,9 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                         done = true;
                         break;
                     }
+                }
+
+                if (nEdge.weight > maxReturnDistance) {
                     continue;
                 }
 
@@ -268,9 +261,9 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
     List<Path> filter(List<Path> paths) {
         List<Path> filteredPath = new LinkedList<>();
-        // add valid paths here
+        // filter valid paths
         for (Path path : paths) {
-            if (path.getDistance() < 1.2 * maxDistance) {
+            if (path.getDistance() < 1.2 * maxDistance || path.getDistance() < minDistance / 1.1) {
                 filteredPath.add(path);
             }
         }
@@ -288,7 +281,21 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
                 }
             }
         });
-        return filteredPath;
+        List<Path> retainedPaths = new LinkedList<>();
+        for (Path path1 : filteredPath) {
+            boolean retained = true;
+            for (Path path2 : retainedPaths) {
+                if (calculateSimilarity(path1, path2) > 1.7) {
+                    retained = false;
+                    break;
+                }
+            }
+            if (retained) {
+                retainedPaths.add(path1);
+            }
+        }
+
+        return retainedPaths;
     }
 
     private double[] calcAscendDescend(final PointList pointList) {
@@ -343,4 +350,33 @@ public class MultipleRoundTripsRouting extends AbstractRoutingAlgorithm {
 
     }
 
+    private double calculateSimilarity(final Path path1, final Path path2) {
+        double[] sharedEdgesLength = new double[]{0};
+        path1.forEveryEdge(new Path.EdgeVisitor() {
+            @Override
+            public void next(EdgeIteratorState edge1, int index, int prevEdgeId) {
+                path2.forEveryEdge(new Path.EdgeVisitor() {
+                    @Override
+                    public void next(EdgeIteratorState edge2, int index, int prevEdgeId) {
+                        if (edge2.getEdge() == edge1.getEdge()) {
+                            sharedEdgesLength[0] += edge1.getDistance();
+                        }
+                    }
+
+                    @Override
+                    public void finish() {
+
+                    }
+                });
+            }
+
+            @Override
+            public void finish() {
+
+            }
+        });
+        return sharedEdgesLength[0] / path1.getDistance() + sharedEdgesLength[0] / path2.getDistance();
+
+    }
 }
+
